@@ -17,3 +17,7 @@ Make bir [UNIX](https://en.wikipedia.org/wiki/Unix) aracıdır ve bir projenin f
 **Örneğin**, bir kural herhangi bir bağımlılık belirtiyorsa, bu durumda make tool derleme amaçlı bu bağımlılığı içerecektir. Make komutu makefile'da modüller oluşturmak veya dosyaları temizlemek için kullanılır. 
 
 **Make'in genel sözdizimi şöyledir:**
+
+```
+%make target_label             #target_label is a specific target in makefile
+```
