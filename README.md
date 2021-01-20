@@ -19,5 +19,13 @@ Make bir [UNIX](https://en.wikipedia.org/wiki/Unix) aracıdır ve bir projenin f
 **Make'in genel sözdizimi şöyledir:**
 
 ```
-%make target_label             #target_label is a specific target in makefile
+%make target_label             #target_label makefile'da belirli bir hedeftir
 ```
+
+*Örneğin*, dosyaları temizlemek için rm komutlarını çalıştırmak istersek şunu yazarız:
+
+```
+%make clean                #burada clean, rm komutları için belirtilen bir target_label'dır.
+```
+Tip : ff
+
