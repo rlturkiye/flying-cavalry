@@ -27,5 +27,17 @@ Make bir [UNIX](https://en.wikipedia.org/wiki/Unix) aracıdır ve bir projenin f
 ```
 %make clean                #burada clean, rm komutları için belirtilen bir target_label'dır.
 ```
-Tip : ff
+### C++ Makefile
+
+A makefile is nothing but a text file that is used or referenced by the ‘make’ command to build the targets. A makefile also contains information like source-level dependencies for each file as well as the build-order dependencies.
+
+Now let’s see the general structure of makefile.
+
+A makefile typically starts with variable declarations followed by a set of target entries for building specific targets. These targets may be .o or other executable files in C or C++ and .class files in Java.
+
+We can also have a set of target entries for executing a set of commands specified by the target label.
+
+
+
+
 
