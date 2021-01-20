@@ -18,26 +18,71 @@ Make bir [UNIX](https://en.wikipedia.org/wiki/Unix) aracıdır ve bir projenin f
 
 **Make'in genel sözdizimi şöyledir:**
 
-```
+```makefile
 %make target_label             #target_label makefile'da belirli bir hedeftir
 ```
 
 *Örneğin*, dosyaları temizlemek için rm komutlarını çalıştırmak istersek şunu yazarız:
 
-```
+```makefile
 %make clean                #burada clean, rm komutları için belirtilen bir target_label'dır.
 ```
 ### C++ Makefile
 
-A makefile is nothing but a text file that is used or referenced by the ‘make’ command to build the targets. A makefile also contains information like source-level dependencies for each file as well as the build-order dependencies.
+Makefile, hedefleri oluşturmak için "make" komutu tarafından kullanılan veya başvurulan bir metin dosyasından başka bir şey değildir. Bir makefile ayrıca her dosya için kaynak düzeyi bağımlılıkları ve yapı sırası bağımlılıkları gibi bilgileri içerir.
 
-Now let’s see the general structure of makefile.
+Şimdi makefile'ın genel yapısına bakalım.
 
-A makefile typically starts with variable declarations followed by a set of target entries for building specific targets. These targets may be .o or other executable files in C or C++ and .class files in Java.
+Bir makefile tipik olarak değişken tanımlamaları(variable declarations) ile başlar ve ardından belirli hedefler oluşturmak için bir dizi hedef girdi gelir. Bu hedefler, .o veya C veya C ++ 'daki diğer yürütülebilir dosyalar ve Java'daki .class dosyaları olabilir.
 
-We can also have a set of target entries for executing a set of commands specified by the target label.
+Ayrıca, hedef etiket tarafından belirtilen bir dizi komutu yürütmek için bir dizi hedef girişimiz olabilir.
 
+**Dolayısıyla genel bir makefile aşağıda gösterildiği gibidir:**
 
+```makefile
+# comment
+ 
+target:  dependency1 dependency2 ... dependencyn
+      <tab> command
+ 
+# (not: make'in çalışması için komut satırındaki <tab> gereklidir)
+```
 
+**Makefile'ın basit bir örneği aşağıda gösterilmiştir.**
 
+```makefile
+# myprogram.o ve mylib.lib'den yürütülebilir(executable) myprogram oluşturmak için bir yapı komutu
+all:myprogram.o mylib.o
+        gcc –o myprogram myprogram.o mylib.o
+clean:
+        $(RM) myprogram
+```
 
+Yukarıdaki makefile'da iki hedef etiket(target labels) belirledik, ilki myprogram ve mylib nesne dosyalarından çalıştırılabilir oluşturmak için "all" etiketidir. İkinci hedef etiket "clean", "myprogram" adındaki tüm dosyaları kaldırır.
+
+**Makefile'ın başka bir varyasyonunu görelim.**
+
+```makefile
+# derleyici: C programı için gcc, C ++ için g ++ olarak tanımlayın
+  CC = gcc
+ 
+  # derleyici bayrakları(compiler flags):
+  #  -g     - bu bayrak çalıştırılabilir dosyaya hata ayıklama bilgisi ekler
+  #  -Wall  - bu bayrak çoğu derleyici uyarısını açmak için kullanılır
+  CFLAGS  = -g -Wall
+ 
+  # The build target 
+  TARGET = myprogram
+ 
+  all: $(TARGET)
+ 
+  $(TARGET): $(TARGET).c
+              $(CC) $(CFLAGS) -o $(TARGET) $(TARGET).c
+ 
+  clean:
+              $(RM) $(TARGET)
+```
+
+Yukarıdaki örnekte gösterildiği gibi, bu makefile'da, kullandığımız derleyici değerini içeren 'CC' değişkenini kullanıyoruz (bu durumda GCC). Başka bir değişken "CFLAGS", kullanacağımız derleyici bayraklarını içerir.
+
+Üçüncü değişken 'TARGET', kendisi için çalıştırılabilir dosyayı oluşturmamız gereken programın adını içerir.
