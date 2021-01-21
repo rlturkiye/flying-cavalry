@@ -115,16 +115,14 @@ Daha sonra, programın belirli bölümleri güncellendiğinde dosyalardan hangis
 
 Yukarıdaki dosyalar için bağımlılık tablosu aşağıda verilmiştir.
 
+![](images/dependencyChart.png)
 
+Dolayısıyla, yukarıdaki bağımlılık tablosunda, kökte çalıştırılabilir "main" i görebiliriz. Çalıştırılabilir "main", nesne dosyalarından oluşur; sırasıyla main.cpp, point.cpp ve square.cpp derlenerek oluşturulan main.o, point.o, square.o.
 
+Tüm cpp uygulamaları, yukarıdaki tabloda gösterildiği gibi başlık dosyalarını kullanır. Yukarıda gösterildiği gibi main.cpp, hem point.h hem de square.h'ye başvurur, sürücü programıdır ve point ve square sınıflarını kullanır.
 
+Sonraki dosya point.cpp referanslar point.h. Üçüncü dosya square.cpp, kare çizmek için bir noktaya ihtiyaç duyacağı için square.h ve point.h dosyalarına da başvurur.
 
-
-
-
-
-
-
-
+From the dependency chart above, it’s clear that whenever any .cpp file or .h file referenced by .cpp file changes, we need to regenerate that .o file. For example, when main.cpp changes, we need to regenerate the main.o and link the object files again to generate the main executable.
 
 
