@@ -123,6 +123,17 @@ Tüm cpp uygulamaları, yukarıdaki tabloda gösterildiği gibi başlık dosyala
 
 Sonraki dosya point.cpp referanslar point.h. Üçüncü dosya square.cpp, kare çizmek için bir noktaya ihtiyaç duyacağı için square.h ve point.h dosyalarına da başvurur.
 
-From the dependency chart above, it’s clear that whenever any .cpp file or .h file referenced by .cpp file changes, we need to regenerate that .o file. For example, when main.cpp changes, we need to regenerate the main.o and link the object files again to generate the main executable.
+Yukarıdaki bağımlılık tablosundan, .cpp dosyası tarafından başvurulan herhangi bir .cpp dosyası veya .h dosyası her değiştiğinde, o .o dosyasını yeniden oluşturmamız gerektiği açıktır. Örneğin, main.cpp değiştiğinde, main.o'yu yeniden oluşturmamız ve ana yürütülebilir dosyayı oluşturmak için nesne dosyalarını yeniden bağlamamız gerekir.
+
+
+
+
+
+
+
+
+
+
+
 
 
