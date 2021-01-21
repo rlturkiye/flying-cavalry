@@ -1,8 +1,7 @@
 # flying-cavalry
 Flying Cavalry Project - Ucan Kavalye Projesi 
-# Repository - C++ & Makefile
 
-Learn how to create makefile to work with C++ file.
+# Repository - C++ & Makefile
 
 ## C ++ 'da Makefile Nasıl Oluşturulur ve Kullanılır
 
@@ -123,17 +122,96 @@ Tüm cpp uygulamaları, yukarıdaki tabloda gösterildiği gibi başlık dosyala
 
 Sonraki dosya point.cpp referanslar point.h. Üçüncü dosya square.cpp, kare çizmek için bir noktaya ihtiyaç duyacağı için square.h ve point.h dosyalarına da başvurur.
 
-Yukarıdaki bağımlılık tablosundan, .cpp dosyası tarafından başvurulan herhangi bir .cpp dosyası veya .h dosyası her değiştiğinde, o .o dosyasını yeniden oluşturmamız gerektiği açıktır. Örneğin, main.cpp değiştiğinde, main.o'yu yeniden oluşturmamız ve ana yürütülebilir dosyayı oluşturmak için nesne dosyalarını yeniden bağlamamız gerekir.
+Yukarıdaki bağımlılık tablosundan, .cpp dosyası tarafından başvurulan herhangi bir .cpp dosyası veya .h dosyası her değiştiğinde, o .o dosyasını yeniden oluşturmamız gerektiği açıktır. Örneğin, main.cpp değiştiğinde, main.o'yu yeniden oluşturmamız ve main yürütülebilir dosyayı oluşturmak için nesne dosyalarını yeniden bağlamamız gerekir.
 
+Projede az sayıda dosya varsa, yukarıda verdiğimiz tüm açıklamalar sorunsuz bir şekilde çalışacaktır. Proje çok büyük olduğunda ve dosyalar büyük ve çok fazla olduğunda, dosyaları tekrar tekrar oluşturmak zorlaşır.
 
+Thus, we go for make files and we use to make a tool to build the project and generate the executable.
 
+Bu nedenle, dosya oluşturmaya(make file) gidiyoruz ve projeyi oluşturmak ve yürütülebilir dosyayı oluşturmak için bir make tool kullanıyoruz.
 
+We have already seen various parts of a make file. Note that the file should be named “MAKEFILE” or ‘makefile’ and should be placed in the source folder.
+Bir make dosyasının çeşitli kısımlarını zaten gördük. Dosyanın "MAKEFILE" veya "makefile" olarak adlandırılması ve kaynak klasöre yerleştirilmesi gerektiğini unutmayın.
+Şimdi yukarıdaki örnek için makefile'ı yazacağız.
 
+**Derleyici ve derleyici bayraklarının değerlerini tutacak değişkenleri aşağıda gösterildiği gibi tanımlayacağız.**
 
+```makefile
+CC = g++
+CFLAGS = -wall -g
+```
+Daha sonra makefile'mızda ilk hedefi, yani çalıştırılabilir main'i oluşturuyoruz. Yani bağımlılıkları olan bir hedef yazıyoruz.
+main: main.o point.o square.o
 
+Bu nedenle, bu hedefi oluşturma komutu
+```makefile
+<tab>$(CC) $(CFLAGS) –o main main.o point.o square.o
+```
 
+```
+Not: Yukarıdaki komut aslında g ++ -wall –g –o main main.o point.o square.o 'ya çevrilir.
+```
+Bir sonraki hedefimiz main.o, point.o, square.o nesne dosyaları oluşturmak olacaktır.
 
+**Şimdi main.o'yu oluşturmak için hedef şu şekilde yazılacak:**
+```makefile
+Main.o: main.cpp point.h square.h
+```
 
+**Bu hedef için komut şudur:**
+```makefile
+<tab>$(CC) $(CFLAGS) –c main.cpp
+```
+**Sonraki dosya point.o aşağıdaki komut kullanılarak oluşturulabilir:**
+```makefile
+<tab>$(CC) $(CFLAGS) –c point.h
+```
+Yukarıdaki komutta point.cpp'yi atladık. Bunun nedeni, make'in .o dosyalarının .cpp dosyalarından oluşturulduğunu bilmesidir, bu nedenle yalnızca .h (include file) yeterlidir.
+
+**Benzer şekilde, square.o aşağıdaki komutla oluşturulabilir.**
+```makefile
+<tab>$(CC) $(CFLAGS) –c square.h point.h
+```
+
+**Bu örnek için tüm makefile aşağıda gösterildiği gibi görünecektir:**
+```makefile
+# Makefile for Writing Make Files Example
+ 
+# *****************************************************
+# Variables to control Makefile operation
+ 
+CC = g++
+CFLAGS = -Wall -g
+ 
+# ****************************************************
+# Targets needed to bring the executable up to date
+ 
+main: main.o Point.o Square.o
+    $(CC) $(CFLAGS) -o main main.o Point.o Square.o
+ 
+# The main.o target can be written more simply
+ 
+main.o: main.cpp Point.h Square.h
+    $(CC) $(CFLAGS) -c main.cpp
+ 
+Point.o: Point.h
+ 
+Square.o: Square.h Point.h
+```
+Böylece, üç C ++ dosyasını derleyen ve ardından nesne dosyalarından çalıştırılabilir bir main oluşturan eksiksiz bir makefile'a sahip olduğumuzu görüyoruz.
+
+### Makefiles Avantajları
+
+* Büyük projeler söz konusu olduğunda, makefiles kullanmak projeyi sistematik ve verimli bir şekilde temsil etmemize yardımcı olur.
+* Makefiles, kaynak kodun okunmasını ve hata ayıklamasını daha kısa ve kolay hale getirir.
+*  Makefiles otomatik olarak yalnızca değiştirilen dosyaları derler. Bu nedenle, projenin bazı bölümleri değiştirildiğinde tüm projeyi yeniden oluşturmamız gerekmez.
+* Make tool, birden çok dosyayı aynı anda derlememize olanak tanır, böylece tüm dosyalar tek bir adımda derlenebilir.
+
+### Sonuç
+
+Makefiles, yazılım geliştirme için bir nimettir. Bir C ++ makefile kullanarak daha kısa sürede çözüm üretebiliriz. Ayrıca projenin bir bölümü değiştirildiğinde, makefile tüm projeyi yeniden oluşturmak zorunda kalmadan yalnızca o bölümü yeniden derler ve yeniden oluşturur.
+
+C ++ Makefile, projeyi sistematik ve verimli bir şekilde temsil etmemize izin verir, böylece daha okunabilir ve hata ayıklaması daha kolay hale gelir.
 
 
 
