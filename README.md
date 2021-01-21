@@ -85,4 +85,46 @@ Yukarıdaki makefile'da iki hedef etiket(target labels) belirledik, ilki myprogr
 
 Yukarıdaki örnekte gösterildiği gibi, bu makefile'da, kullandığımız derleyici değerini içeren 'CC' değişkenini kullanıyoruz (bu durumda GCC). Başka bir değişken "CFLAGS", kullanacağımız derleyici bayraklarını içerir.
 
-Üçüncü değişken 'TARGET', kendisi için çalıştırılabilir dosyayı oluşturmamız gereken programın adını içerir.
+Üçüncü değişken 'TARGET', oluşturmamız gereken çalıştırılabilir dosya için programın adını içerir.
+
+Makefile'ın bu varyasyonunun ölçü avantajı, derleyici, derleyici bayrakları veya çalıştırılabilir program adında bir değişiklik olduğunda sadece kullandığımız değişkenlerin değerlerini değiştirmemiz gerektiğidir.
+
+**Make Ve Makefile Örneği**
+
+Aşağıdaki dosyaları içeren bir program örneğini düşünün:
+
+* **Main.cpp**: Ana sürücü programı
+* **Point.h**: Point sınıfı için başlık dosyası
+* **Point.cpp**: Point sınıfı için CPP uygulama dosyası
+* **Square.h**: Square sınıfı için başlık dosyası
+* **Square.cpp**: Square sınıfı için CPP uygulama dosyası
+
+Yukarıda verilen .cpp ve .h dosyalarıyla, .o dosyaları oluşturmak için bu dosyaları ayrı ayrı derlememiz ve ardından bunları main adlı yürütülebilir dosyaya bağlamamız gerekir.
+
+Şimdi bu dosyaları ayrı ayrı derliyoruz.
+
+* **g++ -c main.cpp**: main.o oluşturur
+* **g++ -c point.cpp**: point.o oluşturur 
+* **g++ -c square.cpp**: square.o oluşturur
+
+Ardından, çalıştırılabilir main'i oluşturmak için nesne dosyalarını birbirine bağlarız.
+
+**g++ -o main main.o point.o square.o**
+
+Daha sonra, programın belirli bölümleri güncellendiğinde dosyalardan hangisini yeniden derlememiz ve yeniden oluşturmamız gerektiğine karar vermemiz gerekiyor. Bunun için, uygulama dosyalarının her biri için çeşitli bağımlılıkları gösteren bir **bağımlılık tablomuz** olacak.
+
+Yukarıdaki dosyalar için bağımlılık tablosu aşağıda verilmiştir.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
