@@ -213,5 +213,8 @@ Makefiles, yazılım geliştirme için bir nimettir. Bir C ++ makefile kullanara
 
 C ++ Makefile, projeyi sistematik ve verimli bir şekilde temsil etmemize izin verir, böylece daha okunabilir ve hata ayıklaması daha kolay hale gelir.
 
+### Referans
+
+https://www.softwaretestinghelp.com/cpp-makefile-tutorial/
 
 
