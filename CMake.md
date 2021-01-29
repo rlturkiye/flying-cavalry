@@ -121,14 +121,12 @@ set(CMAKE_CXX_FLAGS "-Wall")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 ```
 
+### Referanslar
 
+https://medium.com/@onur.dundar1/cmake-tutorial-585dd180109b
 
+https://medium.com/@kiranjv/cmake-b55db5c8acb
 
-
-
-
-
-
-
+https://en.wikipedia.org/wiki/CMake#Applications_that_use_CMake
 
 
