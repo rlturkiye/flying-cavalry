@@ -14,14 +14,16 @@ https://www.softwaretestinghelp.com/cpp-makefile-tutorial/
 
 # Repository - C++ & CMake
 
-## CMAKE NEDİR?
+## CMake Nedir?
 ## CMake ile Popüler Açık Kaynak Projeler
-## BİR KODLAMA DİLİ OLARAK CMAKE
+## Bir Kodlama Dili Olarak CMake
 ### CMake Kullanımı
 #### CMake Öreneği
 ### CMake Değişkenleri
 ### Referanslar
 
 https://medium.com/@onur.dundar1/cmake-tutorial-585dd180109b
+
 https://medium.com/@kiranjv/cmake-b55db5c8acb
+
 https://en.wikipedia.org/wiki/CMake#Applications_that_use_CMake
