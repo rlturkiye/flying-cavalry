@@ -1,7 +1,7 @@
 # flying-cavalry
 Flying Cavalry Project - Ucan Kavalye Projesi 
 
-# Repository - C++ & Makefile
+# [Repository - C++ & Makefile](https://github.com/rlturkiye/flying-cavalry/blob/feature/makefile/Makefile.md)
 
 ## C ++ 'da Makefile Nasıl Oluşturulur ve Kullanılır
 ### Make Tool
@@ -14,7 +14,7 @@ https://www.softwaretestinghelp.com/cpp-makefile-tutorial/
 
 https://en.wikipedia.org/wiki/Make_(software)#Makefile
 
-# Repository - C++ & CMake
+# [Repository - C++ & CMake](https://github.com/rlturkiye/flying-cavalry/blob/feature/makefile/CMake.md)
 
 ## CMake Nedir?
 ## CMake ile Popüler Açık Kaynak Projeler
