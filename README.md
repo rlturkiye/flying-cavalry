@@ -12,6 +12,8 @@ Flying Cavalry Project - Ucan Kavalye Projesi
 
 https://www.softwaretestinghelp.com/cpp-makefile-tutorial/
 
+https://en.wikipedia.org/wiki/Make_(software)#Makefile
+
 # Repository - C++ & CMake
 
 ## CMake Nedir?
