@@ -29,3 +29,13 @@ https://medium.com/@onur.dundar1/cmake-tutorial-585dd180109b
 https://medium.com/@kiranjv/cmake-b55db5c8acb
 
 https://en.wikipedia.org/wiki/CMake#Applications_that_use_CMake
+
+# [EasySamples for CMake and Makefile](https://github.com/rlturkiye/flying-cavalry/tree/feature/makefile/easySamples)
+
+* [CMakeSample](https://github.com/rlturkiye/flying-cavalry/tree/feature/makefile/easySamples/CMakeSample)
+
+* [MakefileSample](https://github.com/rlturkiye/flying-cavalry/tree/feature/makefile/easySamples/MakefileSample)
+
+  - [math](https://github.com/rlturkiye/flying-cavalry/tree/feature/makefile/easySamples/MakefileSample/math)
+
+  - [message](https://github.com/rlturkiye/flying-cavalry/tree/feature/makefile/easySamples/MakefileSample/message)
