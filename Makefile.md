@@ -99,13 +99,13 @@ Yukarıda verilen .cpp ve .h dosyalarıyla, .o dosyaları oluşturmak için bu d
 
 Şimdi bu dosyaları ayrı ayrı derliyoruz.
 
-* **g++ -c main.cpp**: main.o oluşturur
-* **g++ -c point.cpp**: point.o oluşturur 
-* **g++ -c square.cpp**: square.o oluşturur
+* **g++ -c Main.cpp**: main.o oluşturur
+* **g++ -c Point.cpp**: point.o oluşturur 
+* **g++ -c Square.cpp**: square.o oluşturur
 
 Ardından, çalıştırılabilir main'i oluşturmak için nesne dosyalarını birbirine bağlarız.
 
-**g++ -o main main.o point.o square.o**
+**g++ -o main Main.o Point.o Square.o**
 
 Daha sonra, programın belirli bölümleri güncellendiğinde dosyalardan hangisini yeniden derlememiz ve yeniden oluşturmamız gerektiğine karar vermemiz gerekiyor. Bunun için, uygulama dosyalarının her biri için çeşitli bağımlılıkları gösteren bir **bağımlılık tablomuz** olacak.
 
