@@ -102,13 +102,10 @@ Note: It's generally not a good idea to install AirSim in C drive. This can caus
 * Make sure build configuration is set to DebugGame_Editor and Win64 in Visual Studio. Hit F5 to run. This should open blocks project in Unreal Engine.
 
 * Press the Play button in Unreal Editor and you will see something like this,
-'''
-Note: If Unreal Editor asks you to "Choose Vehicle" just click "No" to select drone.
-'''
+>Note: If Unreal Editor asks you to "Choose Vehicle" just click "No" to select drone.
+
 
 ![](https://github.com/rlturkiye/flying-cavalry/blob/main/images/unreal_ss.jpg?raw=true)
 
 If you see a drone, you have finished the installation successfully!
-'''
-Note: If you see a gray screen after pressing the play button, just wait a few minutes for loading the assets then you can see the environment and a drone.
-'''
+>Note: If you see a gray screen after pressing the play button, just wait a few minutes for loading the assets then you can see the environment and a drone.
