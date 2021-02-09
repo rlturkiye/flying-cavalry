@@ -54,6 +54,11 @@ If you get prompts to convert project, look for More Options or Convert-In-Place
 After Unreal Editor loads, press Play button.
 
 ## Windows
+BEFORE START INSTALL GIT
+
+https://git-scm.com/download/win
+64 bit Windows Setup ( not the portable one )
+
 
 ### 0- Create Epic Games Account 
 
