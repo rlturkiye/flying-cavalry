@@ -92,7 +92,6 @@ Note: It's generally not a good idea to install AirSim in C drive. This can caus
 
 ### 4- Test Install
 
-## Set-up Unreal Environment
 * Navigate to folder AirSim\Unreal\Environments\Blocks and run update_from_git.bat .
 
 * Double click on generated .sln file to open in Visual Studio 2019 or newer.
