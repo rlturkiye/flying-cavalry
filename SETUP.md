@@ -59,6 +59,7 @@ BEFORE START INSTALL GIT and CMAKE
 https://git-scm.com/download/win
 64 bit Windows Setup ( not the portable one )
 
+CMake download page: https://cmake.org/download/
 You can install CMAKE by following the instructions in this video
 https://www.youtube.com/watch?v=8_X5Iq9niDE
 
