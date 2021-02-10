@@ -54,10 +54,13 @@ If you get prompts to convert project, look for More Options or Convert-In-Place
 After Unreal Editor loads, press Play button.
 
 ## Windows
-BEFORE START INSTALL GIT
+BEFORE START INSTALL GIT and CMAKE
 
 https://git-scm.com/download/win
 64 bit Windows Setup ( not the portable one )
+
+You can install CMAKE by following the instructions in this video
+https://www.youtube.com/watch?v=8_X5Iq9niDE
 
 
 ### 0- Create Epic Games Account 
