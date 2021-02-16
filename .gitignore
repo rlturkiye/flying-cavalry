@@ -1,6 +1,7 @@
 AirSim/
+AirSim
+unreal
 unreal/
-images/
 *.jpg
 *.mp4
 *.png

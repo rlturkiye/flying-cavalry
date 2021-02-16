@@ -1,4 +1,4 @@
-```# coding=utf-8
+# coding=utf-8
 # Copyright 2021 Reinforcement Learning Turkiye , Flying Cavalry Team.
 # Licensed under the MIT License,(the "License");
 # you may not use this file except in compliance with the License.
@@ -11,9 +11,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-```
-# Flying Cavalry
-
-Flying Cavalry Project - Ucan Kavalye Projesi 
-All copyright by Reinforcement Learning Turkiye 2021.
-
