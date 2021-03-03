@@ -39,7 +39,7 @@ class Depth(Camera):
         return img_depth
 
 
-    def save_single_img(self, client,cam_type=0, file_name= "DEPTH "+str(datetime.datetime.now()), path="", format=".png"):
+    def save_single_img(self, client,cam_type=0, file_name= "DEPTH "+str(datetime.datetime.now()), path="./", format=".png"):
         """
         Saves the image to the specified location.
         cam_type: specifies the location of the camera in the drone.
