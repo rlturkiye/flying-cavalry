@@ -24,13 +24,14 @@ class RGB(Camera):
         return img_rgb
 
     
-    def save_single_img(self, client, cam_type=0, file_name="RGB "+str(datetime.datetime.now()), path="./", format=".png"):
+    def save_single_img(self, client, cam_type="0", file_name="RGB "+str(datetime.datetime.now()), path="./", format=".png"):
         """
         Saves the image to the specified location.
-        cam_type: specifies the location of the camera in the drone.
-        file_name:  gets the day and time the image was received by default,.
-        path: specifies the location you want to save. It saves in the directory where it is located  by default.
-        format: specifies the format of the picture (.jpg, .png etc.) takes ".png" by default
+        Args:
+            cam_type: specifies the location of the camera in the drone.
+            file_name:  gets the day and time the image was received by default,.
+            path: specifies the location you want to save. It saves in the directory where it is located  by default.
+            format: specifies the format of the picture (.jpg, .png etc.) takes ".png" by default
         """
 
         #Save an image on path with your format
@@ -38,3 +39,12 @@ class RGB(Camera):
 
         return
     
+    def camera_info(self,client,cam_type="0"):
+          """
+        Get details about the camera
+        Args:
+            camera_name (str): Name of the camera, for backwards compatibility, ID numbers such as 0,1,etc. can also be used
+        """
+        info=self.client.simGetCameraInfo(cam_type)
+
+        return print(info)
