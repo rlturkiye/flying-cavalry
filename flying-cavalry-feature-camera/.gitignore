@@ -1,0 +1,11 @@
+AirSim/
+AirSim
+unreal
+unreal/
+*.jpg
+*.mp4
+*.png
+*.tiff
+pycache
+.vscode
+__pycache__
