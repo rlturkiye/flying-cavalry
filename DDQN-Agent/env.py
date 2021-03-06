@@ -20,7 +20,6 @@ import airsim
 
 MOVEMENT_INTERVAL = 1
 
-
 class DroneEnv(object):
     """Drone environment class using AirSim python API"""
 
@@ -143,16 +142,6 @@ class DroneEnv(object):
             done = 1
             time.sleep(1)
         return done
-
-    def transformToTensor(self, img):
-        if self.useGPU:
-            tensor = torch.cuda.FloatTensor(img)
-        else:
-            tensor = torch.Tensor(img)
-        tensor = tensor.unsqueeze(0)
-        tensor = tensor.unsqueeze(0)
-        tensor = tensor.float()
-        return tensor
 
     def interpret_action(self, action):
         """Interprete action"""

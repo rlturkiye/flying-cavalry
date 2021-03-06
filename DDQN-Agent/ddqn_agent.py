@@ -20,9 +20,7 @@ torch.manual_seed(0)
 random.seed(0)
 np.random.seed(0)
 
-dtype = torch.cuda.FloatTensor() if torch.cuda.is_available() else torch.FloatTensor()
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-
 
 class DQN(nn.Module):
     def __init__(self, in_channels=1, num_actions=4):
@@ -50,7 +48,7 @@ class DDQN_Agent:
         self.eps_decay = 30000
         self.gamma = 0.8
         self.learning_rate = 0.001
-        self.batch_size = 512
+        self.batch_size = 4
         self.max_episodes = 10000
         self.save_interval = 1
         self.test_interval = 1
@@ -59,7 +57,6 @@ class DDQN_Agent:
         self.steps_done = 0
         self.max_steps = 34
 
-        self.device = device
         self.policy = DQN()
         self.target = DQN()
         self.test_network = DQN()
@@ -71,9 +68,11 @@ class DDQN_Agent:
         self.memory = deque(maxlen=10000)
         self.optimizer = optim.Adam(self.policy.parameters(), self.learning_rate)
 
-        print('Using device:', self.device)
         if torch.cuda.is_available():
+            print('Using device:', device)
             print(torch.cuda.get_device_name(0))
+        else:
+            print("Using CPU")
 
         # LOGGING
         cwd = os.getcwd()
@@ -82,9 +81,9 @@ class DDQN_Agent:
             os.mkdir("saved models")
 
         if torch.cuda.is_available():
-            self.policy = self.policy.to(self.device)  # to use GPU
-            self.target = self.target.to(self.device)  # to use GPU
-            self.test_network = self.test_network.to(self.device)  # to use GPU
+            self.policy = self.policy.to(device)  # to use GPU
+            self.target = self.target.to(device)  # to use GPU
+            self.test_network = self.test_network.to(device)  # to use GPU
 
         # model backup
         files = glob.glob(self.save_dir + '\\*.pt')
@@ -118,7 +117,7 @@ class DDQN_Agent:
         self.target.load_state_dict(self.policy.state_dict())
 
     def transformToTensor(self, img):
-        tensor = torch.Tensor(img).to(dtype)
+        tensor = torch.FloatTensor(img).to(device)
         tensor = tensor.unsqueeze(0)
         tensor = tensor.unsqueeze(0)
         tensor = tensor.float()
@@ -153,7 +152,7 @@ class DDQN_Agent:
             (
                 state,
                 action,
-                torch.from_numpy(np.asarray(reward)).to(dtype),
+                reward,
                 self.transformToTensor(next_state),
             )
         )
@@ -167,22 +166,15 @@ class DDQN_Agent:
 
         states = torch.cat(states)
         actions = np.asarray(actions)
-        rewards = torch.cat(rewards)
+        rewards = np.asarray(rewards)
         next_states = torch.cat(next_states)
 
-        if torch.cuda.is_available():
-            current_q = dtype(self.policy(states)[[range(0, self.batch_size)], [actions]])
-            next_q_values = self.target(next_states).cpu().detach().numpy()
-            max_next_q = dtype(next_q_values[[range(0, self.batch_size)], [actions]])
-            expected_q = rewards.to(self.device) + (self.gamma * max_next_q).to(self.device)
-        else:
-            current_q = self.policy(states)[[range(0, self.batch_size)], [actions]]
-            next_q_values = self.target(next_states).detach().numpy()
-            max_next_q = next_q_values[[range(0, self.batch_size)], [actions]]
-            expected_q = rewards + (self.gamma * max_next_q)
+        current_q = self.policy(states)[[range(0, self.batch_size)], [actions]]
+        next_q_values = self.target(next_states).cpu().detach().numpy()
+        max_next_q = next_q_values[[range(0, self.batch_size)], [actions]]
+        expected_q = torch.FloatTensor(rewards + (self.gamma * max_next_q)).to(device)
 
         loss = F.mse_loss(current_q.squeeze(), expected_q.squeeze())
-        print("loss: ", loss, "---", loss.data)
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
