@@ -48,11 +48,11 @@ class DDQN_Agent:
         self.eps_decay = 30000
         self.gamma = 0.8
         self.learning_rate = 0.001
-        self.batch_size = 4
+        self.batch_size = 1024
         self.max_episodes = 10000
-        self.save_interval = 1
-        self.test_interval = 1
-        self.network_update_interval = 1
+        self.save_interval = 10
+        self.test_interval = 10
+        self.network_update_interval = 10
         self.episode = -1
         self.steps_done = 0
         self.max_steps = 34

@@ -23,13 +23,12 @@ MOVEMENT_INTERVAL = 1
 class DroneEnv(object):
     """Drone environment class using AirSim python API"""
 
-    def __init__(self, useGPU=False, useDepth=False):
+    def __init__(self, useDepth=False):
         self.client = airsim.MultirotorClient()
 
         self.last_dist = self.get_distance(self.client.getMultirotorState().kinematics_estimated.position)
         self.quad_offset = (0, 0, 0)
         self.ep = 0
-        self.useGPU = useGPU
         self.useDepth = useDepth
 
     def step(self, action):
@@ -85,7 +84,7 @@ class DroneEnv(object):
             img1d[img1d > 255] = 255
             img2d = np.reshape(img1d, (responses[0].height, responses[0].width))
             image = Image.fromarray(img2d).resize((84, 84)).convert("L")
-            #image.save("depth.png")
+            #image.save("depth" + str(time.time()) + ".png")
         else:
             # Get rgb image
             responses = self.client.simGetImages(
@@ -95,6 +94,7 @@ class DroneEnv(object):
             img1d = np.fromstring(response.image_data_uint8, dtype=np.uint8)
             img_rgba = img1d.reshape(response.height, response.width, 3)
             image = Image.fromarray(img_rgba).resize((84, 84)).convert("L")
+            #image.save("rgb" + str(time.time()) + ".png")
 
         obs = np.array(image)
 
