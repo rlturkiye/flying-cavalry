@@ -25,10 +25,8 @@ class DroneEnv(object):
 
     def __init__(self, useDepth=False):
         self.client = airsim.MultirotorClient()
-
         self.last_dist = self.get_distance(self.client.getMultirotorState().kinematics_estimated.position)
         self.quad_offset = (0, 0, 0)
-        self.ep = 0
         self.useDepth = useDepth
 
     def step(self, action):
@@ -54,11 +52,10 @@ class DroneEnv(object):
         if quad_state.z_val < - 7.3:
             self.client.moveToPositionAsync(quad_state.x_val, quad_state.y_val, -7, 1).join()
 
-        result = self.compute_reward(quad_state, quad_vel, collision)
-        state = self.get_obs()
-        done = self.isDone(result)
+        result, done = self.compute_reward(quad_state, quad_vel, collision)
+        state, image = self.get_obs()
 
-        return state, result, done
+        return state, result, done, image
 
     def reset(self):
         self.client.reset()
@@ -69,9 +66,9 @@ class DroneEnv(object):
         quad_state = self.client.getMultirotorState().kinematics_estimated.position
         self.client.moveToPositionAsync(quad_state.x_val, quad_state.y_val, -7, 1).join()
 
-        obs = self.get_obs()
+        obs, image = self.get_obs()
 
-        return obs
+        return obs, image
 
     def get_obs(self):
         if self.useDepth:
@@ -82,9 +79,8 @@ class DroneEnv(object):
             img1d = np.array(response.image_data_float, dtype=np.float)
             img1d = img1d * 3.5 + 30
             img1d[img1d > 255] = 255
-            img2d = np.reshape(img1d, (responses[0].height, responses[0].width))
-            image = Image.fromarray(img2d).resize((84, 84)).convert("L")
-            #image.save("depth" + str(time.time()) + ".png")
+            image = np.reshape(img1d, (responses[0].height, responses[0].width))
+            image_array = Image.fromarray(image).resize((84, 84)).convert("L")
         else:
             # Get rgb image
             responses = self.client.simGetImages(
@@ -92,13 +88,12 @@ class DroneEnv(object):
             )
             response = responses[0]
             img1d = np.fromstring(response.image_data_uint8, dtype=np.uint8)
-            img_rgba = img1d.reshape(response.height, response.width, 3)
-            image = Image.fromarray(img_rgba).resize((84, 84)).convert("L")
-            #image.save("rgb" + str(time.time()) + ".png")
+            image = img1d.reshape(response.height, response.width, 3)
+            image_array = Image.fromarray(image).resize((84, 84)).convert("L")
 
-        obs = np.array(image)
+        obs = np.array(image_array)
 
-        return obs
+        return obs, image
 
     def get_distance(self, quad_state):
         """Get distance between current state and goal state"""
@@ -113,11 +108,10 @@ class DroneEnv(object):
         reward = -1
 
         if collision:
-            reward = -100
+            reward = -50
         else:
             dist = self.get_distance(quad_state)
             diff = self.last_dist - dist
-            #print("dist: ", dist, " last_dist: ", self.last_dist, "diff", diff)
 
             if dist < 10:
                 reward = 500
@@ -127,13 +121,6 @@ class DroneEnv(object):
 
             self.last_dist = dist
 
-        #print("reward: ", reward)
-
-        return reward
-
-
-    def isDone(self, reward):
-        """Check if episode is done"""
         done = 0
         if reward <= -10:
             done = 1
@@ -141,7 +128,9 @@ class DroneEnv(object):
         elif reward > 499:
             done = 1
             time.sleep(1)
-        return done
+
+        return reward, done
+
 
     def interpret_action(self, action):
         """Interprete action"""
