@@ -9,7 +9,10 @@ class SumTree:
     def __init__(self, capacity):
         self.capacity = capacity
         self.tree = numpy.zeros(2 * capacity - 1)
-        self.data = numpy.zeros(capacity, dtype=object)
+        self.states = numpy.zeros(capacity, dtype=object)
+        self.actions = numpy.zeros(capacity, dtype=object)
+        self.rewards = numpy.zeros(capacity, dtype=object)
+        self.next_states = numpy.zeros(capacity, dtype=object)
         self.n_entries = 0
 
     # update to the root node
@@ -38,10 +41,13 @@ class SumTree:
         return self.tree[0]
 
     # store priority and sample
-    def add(self, p, data):
+    def add(self, p, state, action, reward, next_state):
         idx = self.write + self.capacity - 1
 
-        self.data[self.write] = data
+        self.states[self.write] = state
+        self.actions[self.write] = action
+        self.rewards[self.write] = reward
+        self.next_states[self.write] = next_state
         self.update(idx, p)
 
         self.write += 1
@@ -63,4 +69,4 @@ class SumTree:
         idx = self._retrieve(0, s)
         dataIdx = idx - self.capacity + 1
 
-        return (idx, self.tree[idx], self.data[dataIdx])
+        return (idx, self.tree[idx], self.states[dataIdx], self.actions[dataIdx], self.rewards[dataIdx], self.next_states[dataIdx])

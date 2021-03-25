@@ -24,19 +24,20 @@ np.random.seed(0)
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 class DQN(nn.Module):
-    def __init__(self, in_channels=1, num_actions=4):
+    def __init__(self, in_channels=1, num_actions=7):
         super(DQN, self).__init__()
         self.conv1 = nn.Conv2d(in_channels, 84, kernel_size=4, stride=4)
         self.conv2 = nn.Conv2d(84, 42, kernel_size=4, stride=2)
         self.conv3 = nn.Conv2d(42, 21, kernel_size=2, stride=2)
-        self.fc4 = nn.Linear(21 * 4 * 4, 168)
-        self.fc5 = nn.Linear(168, num_actions)
+        self.fc4 = nn.Linear(21 * 4 * 4 + 3, 171)
+        self.fc5 = nn.Linear(171, num_actions)
 
-    def forward(self, x):
+    def forward(self, x, y):
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
         x = F.relu(self.conv3(x))
         x = x.view(x.size(0), -1)
+        x = torch.cat((x, y), 1)
         x = F.relu(self.fc4(x))
         return self.fc5(x)
 
@@ -44,20 +45,20 @@ class DQN(nn.Module):
 class DDQN_Agent:
     def __init__(self, useDepth=False):
         self.useDepth = useDepth
-        self.eps_start = 0.9
+        self.eps_start = 0.99
         self.eps_end = 0.05
-        self.eps_decay = 30000
+        self.eps_decay = 50000
         self.gamma = 0.8
-        self.learning_rate = 0.001
-        self.batch_size = 64
-        self.memory = Memory(1000)
+        self.learning_rate = 0.005
+        self.batch_size = 256
+        self.memory = Memory(self.batch_size*256)
         self.max_episodes = 10000
-        self.save_interval = 10
-        self.test_interval = 10
-        self.network_update_interval = 10
+        self.save_interval = 50
+        self.test_interval = 50
+        self.network_update_interval = 50
         self.episode = -1
         self.steps_done = 0
-        self.max_steps = 34
+        self.max_steps = 30
 
         self.policy = DQN()
         self.target = DQN()
@@ -113,19 +114,20 @@ class DDQN_Agent:
                 open('saved_model_params.txt', 'w').close()
 
         self.optimizer = optim.Adam(self.policy.parameters(), self.learning_rate)
-        obs, _ = self.env.reset()
-        tensor = self.transformToTensor(obs)
-        writer.add_graph(self.policy, tensor)
 
     def updateNetworks(self):
         self.target.load_state_dict(self.policy.state_dict())
 
-    def transformToTensor(self, img):
-        tensor = torch.FloatTensor(img).to(device)
-        tensor = tensor.unsqueeze(0)
-        tensor = tensor.unsqueeze(0)
-        tensor = tensor.float()
-        return tensor
+    def transformToTensor(self, img, quad_vel):
+        x = torch.FloatTensor(img).to(device)
+        x = x.unsqueeze(0)
+        x = x.unsqueeze(0)
+        x = x.float()
+
+        y = torch.FloatTensor(quad_vel).to(device)
+        y = y.unsqueeze(0)
+        y = y.float()
+        return x, y
 
     def convert_size(self, size_bytes):
         if size_bytes == 0:
@@ -136,7 +138,7 @@ class DDQN_Agent:
         s = round(size_bytes / p, 2)
         return "%s %s" % (s, size_name[i])
 
-    def act(self, state):
+    def act(self, state, quad_vel):
         self.eps_threshold = self.eps_end + (self.eps_start - self.eps_end) * math.exp(
             -1.0 * self.steps_done / self.eps_decay
         )
@@ -144,43 +146,45 @@ class DDQN_Agent:
         if random.random() > self.eps_threshold:
             # print("greedy")
             if torch.cuda.is_available():
-                action = np.argmax(self.policy(state).cpu().data.squeeze().numpy())
+                action = np.argmax(self.policy(state, quad_vel).cpu().data.squeeze().numpy())
             else:
-                action = np.argmax(self.policy(state).data.squeeze().numpy())
+                action = np.argmax(self.policy(state, quad_vel).data.squeeze().numpy())
         else:
-            action = random.randrange(0, 4)
+            action = random.randrange(0, 7)
         return int(action)
 
-    def append_sample(self, state, action, reward, next_state):
-        next_state = self.transformToTensor(next_state)
+    def append_sample(self, state, action, reward, next_state, quad_vel ,next_quad_vel):
+        next_state, next_quad_vel = self.transformToTensor(next_state, next_quad_vel)
 
-        current_q = self.policy(state).squeeze().cpu().detach().numpy()[action]
-        next_q = self.target(next_state).squeeze().cpu().detach().numpy()[action]
+        current_q = self.policy(state, quad_vel).squeeze().cpu().detach().numpy()[action]
+        next_q = self.target(next_state, next_quad_vel).squeeze().cpu().detach().numpy()[action]
         expected_q = reward + (self.gamma * next_q)
 
         error = abs(current_q - expected_q),
 
-        self.memory.add(error, (state, action, reward, next_state))
+        self.memory.add(error, state, action, reward, next_state, quad_vel ,next_quad_vel)
 
     def learn(self):
         if self.memory.tree.n_entries < self.batch_size:
             return
 
-        batch, idxs, is_weights = self.memory.sample(self.batch_size)
-        batch = np.array(batch).transpose()
+        states, actions, rewards, next_states, quad_vels, next_quad_vels, idxs, is_weights = self.memory.sample(self.batch_size)
 
-        states = tuple(batch[0])
-        actions = list(batch[1])
-        rewards = list(batch[2])
-        next_states = tuple(batch[3])
+        states = tuple(states)
+        next_states = tuple(next_states)
+        quad_vels = tuple(quad_vels)
+        next_quad_vels = tuple(next_quad_vels)
+
 
         states = torch.cat(states)
+        next_states = torch.cat(next_states)
+        quad_vels = torch.cat(quad_vels)
+        next_quad_vels = torch.cat(next_quad_vels)
         actions = np.asarray(actions)
         rewards = np.asarray(rewards)
-        next_states = torch.cat(next_states)
 
-        current_q = self.policy(states)[[range(0, self.batch_size)], [actions]]
-        next_q =self.target(next_states).cpu().detach().numpy()[[range(0, self.batch_size)], [actions]]
+        current_q = self.policy(states, quad_vels)[[range(0, self.batch_size)], [actions]]
+        next_q =self.target(next_states, next_quad_vels).cpu().detach().numpy()[[range(0, self.batch_size)], [actions]]
         expected_q = torch.FloatTensor(rewards + (self.gamma * next_q)).to(device)
 
         errors = torch.abs(current_q.squeeze() - expected_q.squeeze()).cpu().detach().numpy()
@@ -206,23 +210,23 @@ class DDQN_Agent:
 
         for e in range(1, self.max_episodes + 1):
             start = time.time()
-            state, _ = self.env.reset()
+            state, _, quad_vel = self.env.reset()
             steps = 0
             score = 0
             while True:
-                state = self.transformToTensor(state)
+                state, quad_vel = self.transformToTensor(state, quad_vel)
 
-                action = self.act(state)
-                next_state, reward, done, _ = self.env.step(action)
+                action = self.act(state, quad_vel)
+                next_state, reward, done, _, next_quad_vel = self.env.step(action)
 
                 if steps == self.max_steps:
                     done = 1
 
-                #self.memorize(state, action, reward, next_state)
-                self.append_sample(state, action, reward, next_state)
+                self.append_sample(state, action, reward, next_state, quad_vel ,next_quad_vel)
                 self.learn()
 
                 state = next_state
+                quad_vel = next_quad_vel
                 steps += 1
                 score += reward
                 if done:
@@ -242,7 +246,7 @@ class DDQN_Agent:
                                 self.episode, reward, round(score / steps, 2), score, self.eps_threshold,
                                 self.steps_done))
 
-                    if torch.cuda.is_available():
+                    """if torch.cuda.is_available():
                         print('Total Memory:', self.convert_size(torch.cuda.get_device_properties(0).total_memory))
                         print('Allocated Memory:', self.convert_size(torch.cuda.memory_allocated(0)))
                         print('Cached Memory:', self.convert_size(torch.cuda.memory_reserved(0)))
@@ -254,14 +258,12 @@ class DDQN_Agent:
                         memory_usage_cached = np.float64(round(torch.cuda.memory_reserved(0) / 1024 ** 3, 1))
 
                         writer.add_scalar("memory_usage_allocated", memory_usage_allocated, self.episode)
-                        writer.add_scalar("memory_usage_cached", memory_usage_cached, self.episode)
+                        writer.add_scalar("memory_usage_cached", memory_usage_cached, self.episode)"""
 
-                    writer.add_scalar('epsilon_value', self.eps_threshold, self.episode)
-                    writer.add_scalar('score_history', score, self.episode)
-                    writer.add_scalar('reward_history', reward, self.episode)
-                    writer.add_scalar('Total steps', self.steps_done, self.episode)
-                    writer.add_scalars('General Look', {'score_history': score,
-                                                        'reward_history': reward}, self.episode)
+                    #writer.add_scalar('epsilon_value', self.eps_threshold, self.episode)
+                    writer.add_scalar('Score', score, self.steps_done)
+                    writer.add_scalar('Reward', reward, self.steps_done)
+                    writer.add_scalar('Total Episodes', self.episode, self.steps_done)
 
                     # save checkpoint
                     if self.episode % self.save_interval == 0:
@@ -275,13 +277,15 @@ class DDQN_Agent:
                     if self.episode % self.network_update_interval == 0:
                         self.updateNetworks()
 
+                    if self.episode  % self.test_interval == 0:
+                        self.test()
+
                     self.episode += 1
                     end = time.time()
                     stopWatch = end - start
                     print("Episode is done, episode time: ", stopWatch)
 
-                    if self.episode % self.test_interval == 0:
-                        self.test()
+
 
                     break
         writer.close()
@@ -293,20 +297,21 @@ class DDQN_Agent:
         steps = 0
         score = 0
         image_array = []
-        state, next_state_image = self.env.reset()
+        state, next_state_image, quad_vel = self.env.reset()
         image_array.append(next_state_image)
 
         while True:
-            state = self.transformToTensor(state)
+            state, quad_vel = self.transformToTensor(state, quad_vel)
 
-            action = int(np.argmax(self.test_network(state).cpu().data.squeeze().numpy()))
-            next_state, reward, done, next_state_image = self.env.step(action)
+            action = int(np.argmax(self.test_network(state, quad_vel).cpu().data.squeeze().numpy()))
+            next_state, reward, done, next_state_image, next_quad_vel = self.env.step(action)
             image_array.append(next_state_image)
 
             if steps == self.max_steps:
                 done = 1
 
             state = next_state
+            quad_vel = next_quad_vel
             steps += 1
             score += reward
 
@@ -316,10 +321,10 @@ class DDQN_Agent:
                     reward, score, self.steps_done))
 
                 with open('tests.txt', 'a') as file:
-                    file.write("TEST, reward: {}, score: {}, total steps: {}".format(
+                    file.write("TEST, reward: {}, score: {}, total steps: {}\n".format(
                         reward, score, self.steps_done))
 
-                writer.add_scalars('Test', {'score': score, 'reward': reward}, self.episode)
+                writer.add_scalar('Test Score', score, self.steps_done)
 
                 end = time.time()
                 stopWatch = end - start
@@ -336,3 +341,38 @@ class DDQN_Agent:
                 video.release()
 
                 break
+
+    def test_agent(self):
+        self.test_network.load_state_dict(self.policy.state_dict())
+
+        for i in range(50):
+            start = time.time()
+            steps = 0
+            score = 0
+            state, next_state_image, quad_vel = self.env.reset()
+
+            while True:
+                state, quad_vel = self.transformToTensor(state, quad_vel)
+
+                action = int(np.argmax(self.test_network(state, quad_vel).cpu().data.squeeze().numpy()))
+                next_state, reward, done, next_state_image, next_quad_vel = self.env.step(action)
+
+
+                if steps == self.max_steps:
+                    done = 1
+
+
+                if steps == self.max_steps:
+                    done = 1
+
+                state = next_state
+                quad_vel = next_quad_vel
+                steps += 1
+                score += reward
+
+                if done:
+                    print("----------------------------------------------------------------------------------------")
+                    print("TEST, reward: {}, score: {}, total steps: {}".format(
+                        reward, score, self.steps_done))
+
+                    break
