@@ -1,17 +1,22 @@
-import ray
-from ray import tune
-#from env import DroneEnv
-from ray.tune.registry import register_env
 from airgym.envs.drone_env import AirSimDroneEnv
 import airgym
+
+import ray
+from ray import tune
+from ray.tune.registry import register_env
+from ray.rllib.models import ModelCatalog
 
 if __name__ == "__main__":
     ray.init(local_mode=True)
 
+    ModelCatalog.register_custom_model(
+        "rnn", TorchRNNModel if args.torch else RNNModel)
+
     register_env("drone_env", 
                  lambda config: AirSimDroneEnv("127.0.0.1", 
-                 0.25,
-                (84, 84, 1)))
+                 3,
+                 (84, 84, 1),
+                 useDepth=False))
 
     config = {
         "env": "drone_env", 

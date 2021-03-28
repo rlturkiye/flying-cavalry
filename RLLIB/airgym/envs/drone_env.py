@@ -8,27 +8,22 @@ from argparse import ArgumentParser
 import gym
 from gym import spaces
 from airgym.envs.airsim_env import AirSimEnv
+from PIL import Image
 
 
 class AirSimDroneEnv(AirSimEnv):
-    def __init__(self, ip_address, step_length, image_shape):
+    def __init__(self, ip_address, step_length, image_shape, useDepth):
         super().__init__(image_shape)
         self.step_length = step_length
         self.image_shape = image_shape
-
-        self.state = {
-            "position": np.zeros(3),
-            "collision": False,
-            "prev_position": np.zeros(3),
-        }
+        self.action_space = spaces.Discrete(7)
 
         self.drone = airsim.MultirotorClient()
-        self.action_space = spaces.Discrete(7)
-        self._setup_flight()
+        self.last_dist = self.get_distance(self.drone.getMultirotorState().kinematics_estimated.position)
+        self.quad_offset = (0, 0, 0)
+        self.useDepth = useDepth
 
-        self.image_request = airsim.ImageRequest(
-            3, airsim.ImageType.DepthPerspective, True, False
-        )
+        self._setup_flight()
 
     def __del__(self):
         self.drone.reset()
@@ -38,108 +33,105 @@ class AirSimDroneEnv(AirSimEnv):
         self.drone.enableApiControl(True)
         self.drone.armDisarm(True)
 
-        # Set home position and velocity
-        self.drone.moveToPositionAsync(0, 0, -19.0225, 10).join()
-        self.drone.moveByVelocityAsync(1, -0.67, -0.8, 5).join()
+        quad_state = self.drone.getMultirotorState().kinematics_estimated.position
+        self.drone.moveToPositionAsync(quad_state.x_val, quad_state.y_val, -7, 10).join()
+        time.sleep(.5)
 
-    def transform_obs(self, responses):
-        img1d = np.array(responses[0].image_data_float, dtype=np.float)
-        img1d = 255 / np.maximum(np.ones(img1d.size), img1d)
-        img2d = np.reshape(img1d, (responses[0].height, responses[0].width))
-
-        from PIL import Image
-
-        image = Image.fromarray(img2d)
-        im_final = np.array(image.resize((84, 84)).convert("L"))
-
-        return im_final.reshape([84, 84, 1])
+        self.last_dist = self.get_distance(self.drone.getMultirotorState().kinematics_estimated.position)
 
     def _get_obs(self):
-        responses = self.drone.simGetImages([self.image_request])
-        image = self.transform_obs(responses)
-        self.drone_state = self.drone.getMultirotorState()
 
-        self.state["prev_position"] = self.state["position"]
-        self.state["position"] = self.drone_state.kinematics_estimated.position
-        self.state["velocity"] = self.drone_state.kinematics_estimated.linear_velocity
+        if self.useDepth:
+            # get depth image
+            responses = self.drone.simGetImages(
+                [airsim.ImageRequest(0, airsim.ImageType.DepthPlanner, pixels_as_float=True)])
+            response = responses[0]
+            img1d = np.array(response.image_data_float, dtype=np.float)
+            img1d = img1d * 3.5 + 30
+            img1d[img1d > 255] = 255
+            image = np.reshape(img1d, (responses[0].height, responses[0].width))
+            image_array = Image.fromarray(image).resize((84, 84)).convert("L")
+        else:
+            # Get rgb image
+            responses = self.drone.simGetImages(
+                [airsim.ImageRequest("1", airsim.ImageType.Scene, False, False)]
+            )
+            response = responses[0]
+            img1d = np.fromstring(response.image_data_uint8, dtype=np.uint8)
+            image = img1d.reshape(response.height, response.width, 3)
+            image_array = Image.fromarray(image).resize((84, 84)).convert("L")
 
-        collision = self.drone.simGetCollisionInfo().has_collided
-        self.state["collision"] = collision
+        obs = np.array(image_array).reshape(84, 84, 1)
 
-        return image
+        self.quad_vel = self.drone.getMultirotorState().kinematics_estimated.linear_velocity
+        self.quad_vel = np.array([self.quad_vel.x_val, self.quad_vel.y_val, self.quad_vel.z_val])
 
-    def _do_action(self, action):
-        quad_offset = self.interpret_action(action)
-        quad_vel = self.drone.getMultirotorState().kinematics_estimated.linear_velocity
-        self.drone.moveByVelocityAsync(
-            quad_vel.x_val + quad_offset[0],
-            quad_vel.y_val + quad_offset[1],
-            quad_vel.z_val + quad_offset[2],
-            5,
-        ).join()
+        return obs
+
 
     def _compute_reward(self):
-        thresh_dist = 7
-        beta = 1
+        """Compute reward"""
 
-        z = -10
-        pts = [
-            np.array([-0.55265, -31.9786, -19.0225]),
-            np.array([48.59735, -63.3286, -60.07256]),
-            np.array([193.5974, -55.0786, -46.32256]),
-            np.array([369.2474, 35.32137, -62.5725]),
-            np.array([541.3474, 143.6714, -32.07256]),
-        ]
+        reward = -1.5
 
-        quad_pt = np.array(
-            list(
-                (
-                    self.state["position"].x_val,
-                    self.state["position"].y_val,
-                    self.state["position"].z_val,
-                )
-            )
-        )
+        collision = self.drone.simGetCollisionInfo().has_collided
+        quad_state = self.drone.getMultirotorState().kinematics_estimated.position
 
-        if self.state["collision"]:
-            reward = -100
+        if collision:
+            reward = -120
+
+        elif quad_state.z_val < -22 or quad_state.z_val > -1:
+            reward = -120
         else:
-            dist = 10000000
-            for i in range(0, len(pts) - 1):
-                dist = min(
-                    dist,
-                    np.linalg.norm(np.cross((quad_pt - pts[i]), (quad_pt - pts[i + 1])))
-                    / np.linalg.norm(pts[i] - pts[i + 1]),
-                )
+            dist = self.get_distance(quad_state)
+            diff = self.last_dist - dist
 
-            if dist > thresh_dist:
-                reward = -10
+            if dist < 10:
+                reward = 500
+            elif diff > 0:
+                reward += diff * 3
             else:
-                reward_dist = math.exp(-beta * dist) - 0.5
-                reward_speed = (
-                    np.linalg.norm(
-                        [
-                            self.state["velocity"].x_val,
-                            self.state["velocity"].y_val,
-                            self.state["velocity"].z_val,
-                        ]
-                    )
-                    - 0.5
-                )
-                reward = reward_dist + reward_speed
+                reward += diff * 3
+
+            self.last_dist = dist
 
         done = 0
         if reward <= -10:
             done = 1
+        elif reward > 499:
+            done = 1
+
+        print(reward)
 
         return reward, done
 
     def step(self, action):
-        self._do_action(action)
-        obs = self._get_obs()
-        reward, done = self._compute_reward()
+        """Step"""
+        self.quad_offset = self.interpret_action(action)
+        # print("quad_offset: ", self.quad_offset)
 
-        return obs, reward, done, self.state
+        """
+        self.drone.moveToPositionAsync(
+            q.x_val + self.quad_offset[0],
+            q.y_val + self.quad_offset[1],
+            q.z_val + self.quad_offset[1],
+            3
+        )"""
+
+        vel = self.drone.getMultirotorState().kinematics_estimated.linear_velocity
+        self.drone.moveByVelocityAsync(
+            vel.x_val + self.quad_offset[0],
+            vel.y_val + self.quad_offset[1],
+            vel.z_val + self.quad_offset[1],
+            3
+        )
+
+        time.sleep(1)
+
+        reward, done = self._compute_reward()
+        obs = self._get_obs()
+
+        return obs, reward, done,  {"quad_vel": self.quad_vel}
 
     def reset(self):
         self._setup_flight()
@@ -162,3 +154,14 @@ class AirSimDroneEnv(AirSimEnv):
             quad_offset = (0, 0, 0)
 
         return quad_offset
+
+    def get_distance(self, quad_state):
+        """Get distance between current state and goal state"""
+        pts = np.array([3, -76, -7])
+        quad_pt = np.array(list((quad_state.x_val, quad_state.y_val, quad_state.z_val)))
+        dist = np.linalg.norm(quad_pt - pts)
+        return dist
+
+    def close(self):
+        print("close func called")
+        pass
