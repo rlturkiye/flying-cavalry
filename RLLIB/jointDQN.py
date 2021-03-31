@@ -1,71 +1,86 @@
-import numpy as np
-
 from ray.rllib.models.modelv2 import ModelV2
-from ray.rllib.models.preprocessors import get_preprocessor
-from ray.rllib.models.tf.recurrent_net import RecurrentNetwork
-from ray.rllib.models.torch.nn import RecurrentNetwork as TorchRNN
-from ray.rllib.utils.annotations import override
-from ray.rllib.utils.framework import try_import_tf, try_import_torch
+from ray.rllib.utils.annotations import PublicAPI
+from ray.rllib.utils import try_import_torch
 
-tf1, tf, tfv = try_import_tf()
-torch, nn = try_import_torch()
+class JointDQN(ModelV2):
 
+    def __init__(self, obs_space, action_space, num_outputs, model_config,
+                 name):
+        """Initialize a TorchModelV2.
 
-class JointDQN(TorchRNN, nn.Module):
-    def __init__(self,
-                 obs_space,
-                 action_space,
-                 num_outputs,
-                 model_config,
-                 name,
-                 fc_size=64,
-                 lstm_state_size=256):
-        nn.Module.__init__(self)
-        super().__init__(obs_space, action_space, num_outputs, model_config,
-                         name)
+        Here is an example implementation for a subclass
+        ``MyModelClass(TorchModelV2, nn.Module)``::
 
-        self.obs_size = get_preprocessor(obs_space)(obs_space).size
-        self.fc_size = fc_size
-        self.lstm_state_size = lstm_state_size
-
-        # Build the Module from fc + LSTM + 2xfc (action + value outs).
-        self.fc1 = nn.Linear(self.obs_size, self.fc_size)
-        self.lstm = nn.LSTM(
-            self.fc_size, self.lstm_state_size, batch_first=True)
-        self.action_branch = nn.Linear(self.lstm_state_size, num_outputs)
-        self.value_branch = nn.Linear(self.lstm_state_size, 1)
-        # Holds the current "base" output (before logits layer).
-        self._features = None
-
-    @override(ModelV2)
-    def get_initial_state(self):
-        # TODO: (sven): Get rid of `get_initial_state` once Trajectory
-        #  View API is supported across all of RLlib.
-        # Place hidden states on same device as model.
-        h = [
-            self.fc1.weight.new(1, self.lstm_state_size).zero_().squeeze(0),
-            self.fc1.weight.new(1, self.lstm_state_size).zero_().squeeze(0)
-        ]
-        return h
-
-    @override(ModelV2)
-    def value_function(self):
-        assert self._features is not None, "must call forward() first"
-        return torch.reshape(self.value_branch(self._features), [-1])
-
-    @override(TorchRNN)
-    def forward_rnn(self, inputs, state, seq_lens):
-        """Feeds `inputs` (B x T x ..) through the Gru Unit.
-        Returns the resulting outputs as a sequence (B x T x ...).
-        Values are stored in self._cur_value in simple (B) shape (where B
-        contains both the B and T dims!).
-        Returns:
-            NN Outputs (B x T x ...) as sequence.
-            The state batches as a List of two items (c- and h-states).
+            def __init__(self, *args, **kwargs):
+                TorchModelV2.__init__(self, *args, **kwargs)
+                nn.Module.__init__(self)
+                self._hidden_layers = nn.Sequential(...)
+                self._logits = ...
+                self._value_branch = ...
         """
-        x = nn.functional.relu(self.fc1(inputs))
-        self._features, [h, c] = self.lstm(
-            x, [torch.unsqueeze(state[0], 0),
-                torch.unsqueeze(state[1], 0)])
-        action_out = self.action_branch(self._features)
-        return action_out, [torch.squeeze(h, 0), torch.squeeze(c, 0)]
+
+        if not isinstance(self, nn.Module):
+            raise ValueError(
+                "Subclasses of TorchModelV2 must also inherit from "
+                "nn.Module, e.g., MyModel(TorchModelV2, nn.Module)")
+
+        ModelV2.__init__(
+            self,
+            obs_space,
+            action_space,
+            num_outputs,
+            model_config,
+            name,
+            framework="torch")
+
+
+
+
+    def forward(self, input_dict, state, seq_lens):
+        """Call the model with the given input tensors and state.
+
+        Any complex observations (dicts, tuples, etc.) will be unpacked by
+        __call__ before being passed to forward(). To access the flattened
+        observation tensor, refer to input_dict["obs_flat"].
+
+        This method can be called any number of times. In eager execution,
+        each call to forward() will eagerly evaluate the model. In symbolic
+        execution, each call to forward creates a computation graph that
+        operates over the variables of this model (i.e., shares weights).
+
+        Custom models should override this instead of __call__.
+
+        Arguments:
+            input_dict (dict): dictionary of input tensors, including "obs",
+                "obs_flat", "prev_action", "prev_reward", "is_training"
+            state (list): list of state tensors with sizes matching those
+                returned by get_initial_state + the batch dimension
+            seq_lens (Tensor): 1d tensor holding input sequence lengths
+
+        Returns:
+            (outputs, state): The model output tensor of size
+                [BATCH, num_outputs]
+
+        Sample implementation for the ``MyModelClass`` example::
+
+            def forward(self, input_dict, state, seq_lens):
+                features = self._hidden_layers(input_dict["obs"])
+                self._value_out = self._value_branch(features)
+                return self._logits(features), state
+        """
+        raise NotImplementedError
+
+
+
+    def value_function(self):
+        """Return the value function estimate for the most recent forward pass.
+
+        Returns:
+            value estimate tensor of shape [BATCH].
+
+        Sample implementation for the ``MyModelClass`` example::
+
+            def value_function(self):
+                return self._value_out
+        """
+        raise NotImplementedError
