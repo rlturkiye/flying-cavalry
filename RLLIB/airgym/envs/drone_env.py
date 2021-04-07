@@ -10,15 +10,24 @@ from gym import spaces
 from airgym.envs.airsim_env import AirSimEnv
 from PIL import Image
 
+from CameraRL.RGB import RGB
+from CameraRL.DepthVision import DepthVision
+
+
 
 class AirSimDroneEnv(AirSimEnv):
     def __init__(self, ip_address, step_length, image_shape, useDepth):
         super().__init__(image_shape)
+        self.drone = airsim.MultirotorClient()
+        if useDepth:
+            self.camera = DepthVision(client=self.drone,camera_name="0")
+        else:
+            self.camera = RGB(client=self.drone, camera_name="0")
         self.step_length = step_length
         self.image_shape = image_shape
         self.action_space = spaces.Discrete(7)
 
-        self.drone = airsim.MultirotorClient()
+        
         self.last_dist = self.get_distance(self.drone.getMultirotorState().kinematics_estimated.position)
         self.quad_offset = (0, 0, 0)
         self.useDepth = useDepth
@@ -41,28 +50,8 @@ class AirSimDroneEnv(AirSimEnv):
 
     def _get_obs(self):
 
-        if self.useDepth:
-            # get depth image
-            responses = self.drone.simGetImages(
-                [airsim.ImageRequest(0, airsim.ImageType.DepthPlanner, pixels_as_float=True)])
-            response = responses[0]
-            img1d = np.array(response.image_data_float, dtype=np.float)
-            img1d = img1d * 3.5 + 30
-            img1d[img1d > 255] = 255
-            image = np.reshape(img1d, (responses[0].height, responses[0].width))
-            image_array = Image.fromarray(image).resize((84, 84)).convert("L")
-        else:
-            # Get rgb image
-            responses = self.drone.simGetImages(
-                [airsim.ImageRequest("1", airsim.ImageType.Scene, False, False)]
-            )
-            response = responses[0]
-            img1d = np.fromstring(response.image_data_uint8, dtype=np.uint8)
-            image = img1d.reshape(response.height, response.width, 3)
-            image_array = Image.fromarray(image).resize((84, 84)).convert("L")
-
-        obs = np.array(image_array).reshape(84, 84, 1)
-
+        obs = self.camera.fetch_single_img()
+    
         self.quad_vel = self.drone.getMultirotorState().kinematics_estimated.linear_velocity
         self.quad_vel = np.array([self.quad_vel.x_val, self.quad_vel.y_val, self.quad_vel.z_val])
 

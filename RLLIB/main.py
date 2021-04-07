@@ -1,11 +1,12 @@
 from airgym.envs.drone_env import AirSimDroneEnv
 import airgym
-
 import ray
 from ray import tune
 from ray.tune.registry import register_env
 from ray.rllib.models import ModelCatalog
 from jointDQN import JointDQN
+import sys
+sys.path.append('D:\RL\RLLIB')
 
 if __name__ == "__main__":
     ray.init(local_mode=True)
@@ -30,4 +31,4 @@ if __name__ == "__main__":
         "log_level" : "DEBUG"
     }
 
-    results = tune.run("jointDQN", config=config)
+    results = tune.run("DQN", config=config)
