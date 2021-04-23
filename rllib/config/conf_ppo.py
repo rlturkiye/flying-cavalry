@@ -1,14 +1,7 @@
-from airgym.envs.drone_env import AirSimDroneEnv
-import airgym
-
-import ray
-from ray import tune
-from ray.tune.registry import register_env
-
-from ray.rllib.agents import with_common_config
+from .common import with_common_config
 
 
-DEFAULT_CONFIG = with_common_config({
+PPO_CONFIG = with_common_config({
     # Should use a critic as a baseline (otherwise don't use value baseline;
     # required for using GAE).
     "use_critic": True,
@@ -83,16 +76,5 @@ DEFAULT_CONFIG = with_common_config({
     "observation_filter": "NoFilter",
 })
 
-if __name__ == "__main__":
-    ray.init(local_mode=True)
-
-    register_env("drone_env", 
-                 lambda config: AirSimDroneEnv("127.0.0.1", 
-                 3,
-                 (84, 84, 1),
-                 useDepth=False))
-
-    DEFAULT_CONFIG["env"] = "drone_env"
-    DEFAULT_CONFIG["framework"] = "torch"
-
-    results = tune.run("PPO", config=DEFAULT_CONFIG)
+def PPOconf():
+    return PPO_CONFIG
