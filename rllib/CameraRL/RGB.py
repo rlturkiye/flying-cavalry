@@ -29,7 +29,7 @@ class RGB(Camera):
         img_rgb = img1d.reshape(response.height, response.width, 3)
 
         img_rgb_resized = Image.fromarray(img_rgb).resize((84, 84)).convert("L")
-        img_rgb = np.array(img_rgb_resized).reshape(84, 84, 1)
+        img_rgb = np.array(img_rgb_resized).reshape(1, 84, 84)
 
         return img_rgb
 

@@ -17,7 +17,7 @@ DQN_CONFIG = with_common_config({
     "dueling": True,
     # Dense-layer setup for each the advantage branch and the value branch
     # in a dueling architecture.
-    "hiddens": [256],
+    "hiddens": [],
     # Whether to use double dqn
     "double_q": True,
     # N-step Q learning

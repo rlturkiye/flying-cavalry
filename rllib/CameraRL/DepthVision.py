@@ -35,7 +35,7 @@ class DepthVision(Camera):
         img_depth = np.array(img_reshaped * 255, dtype=np.float32)
 
         img_depth_resized = Image.fromarray(img_depth).resize((84, 84)).convert("L")
-        img_depth = np.array(img_depth_resized).reshape(84, 84, 1)
+        img_depth = np.array(img_depth_resized).reshape(1, 84, 84)
 
         return img_depth
 
