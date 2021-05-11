@@ -11,16 +11,18 @@ import sys
 import torch
 #sys.path.append('D:\RL\RLLIB') # TODO Investigate whether is this necessary or not
 
-from CustomModel import CumstomDQN
+from CustomModel import CustomNetwork
 from ray.rllib.utils.typing import ModelConfigDict
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--alg", default="DQN", help="RL algorithm")
+    parser.add_argument("--network", default="VGG", help="Vision network")
     args = parser.parse_args()
 
-    global ALG
+    global ALG, NETWORK
     ALG = args.alg
+    NETWORK = args.network
 
 if __name__ == "__main__":
     main()
@@ -33,13 +35,13 @@ if __name__ == "__main__":
                  (1, 84, 84),
                  useDepth=False))
 
-    ModelCatalog.register_custom_model('jointNetwork', CumstomDQN)
+    ModelCatalog.register_custom_model('jointNetwork', CustomNetwork)
 
     modelConfig = ModelConfigDict()
-    modelConfig["conv_filters"] = [[84, 4, 4],[42,4,2],[21,2,2]]
+    modelConfig["conv_filters"] = [[84, 4, 4],[42, 4, 2],[21, 2, 2]]
     modelConfig["conv_activation"] = "relu"
     modelConfig["fcnet_activation"] = "relu"
-    modelConfig["fcnet_hiddens"] = [[21 * 4 * 4, 171], [171,7]]
+    modelConfig["fcnet_hiddens"] = [[21 * 4 * 4, 171], [171, 7]]
 
     config = getConfig(ALG)
     config["lr"] = 1e-4

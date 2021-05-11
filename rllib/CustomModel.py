@@ -17,7 +17,7 @@ import gym
 
 
 # num_outputs/num_actions = 7
-class CumstomDQN(TorchModelV2,nn.Module): 
+class CustomNetwork(TorchModelV2,nn.Module): 
 
     def __init__(self, obs_space, action_space, num_outputs, model_config, name):
         
@@ -26,7 +26,7 @@ class CumstomDQN(TorchModelV2,nn.Module):
         obs_space = gym.spaces.Box(0, 255,[1, 84, 84])
 
         nn.Module.__init__(self)
-        super(CumstomDQN, self).__init__(obs_space, action_space, num_outputs, model_config,name)  
+        super(CustomNetwork, self).__init__(obs_space, action_space, num_outputs, model_config,name)  
         TorchModelV2.__init__(self, obs_space, action_space, num_outputs, model_config, name)
    
 
@@ -94,7 +94,7 @@ if __name__ == '__main__':
     deneme["custom_model_config"]["fcnet_activation"] = "relu"
     deneme["custom_model_config"]["fcnet_hiddens"] = [[21 * 4 * 4 , 171],[171,7]]
 
-    dqn = CumstomDQN(obs_space, action_space, 7, deneme, "name")
+    dqn = CustomNetwork(obs_space, action_space, 7, deneme, "name")
     dqn.to(device)
   
     print(obs.shape, steps.shape, actions.shape)
