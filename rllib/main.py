@@ -11,7 +11,7 @@ import sys
 import torch
 #sys.path.append('D:\RL\RLLIB') # TODO Investigate whether is this necessary or not
 
-from CustomModel import CustomNetwork
+from CustomModels.CustomModel import CustomNetwork
 from ray.rllib.utils.typing import ModelConfigDict
 
 def main():
