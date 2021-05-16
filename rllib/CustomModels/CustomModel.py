@@ -14,20 +14,22 @@ from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 from ray.rllib.utils.typing import ModelConfigDict
 import gym
+import os, sys
+currentdir = os.path.dirname(os.path.realpath(__file__))
+parentdir = os.path.dirname(currentdir)
+sys.path.append(parentdir)
+from airgym.envs.drone_env import AirSimDroneEnv
+import numpy
+from ray.rllib.utils.typing import ModelConfigDict
 
 
 # num_outputs/num_actions = 7
 class CustomNetwork(TorchModelV2,nn.Module): 
 
-    def __init__(self, obs_space, action_space, num_outputs, model_config, name):
-        
-        action_space = gym.spaces.Discrete(num_outputs)
-        
-        obs_space = gym.spaces.Box(0, 255,[1, 84, 84])
-
-        nn.Module.__init__(self)
-        super(CustomNetwork, self).__init__(obs_space, action_space, num_outputs, model_config,name)  
+    def __init__(self, obs_space, action_space, num_outputs, model_config, name): 
         TorchModelV2.__init__(self, obs_space, action_space, num_outputs, model_config, name)
+        nn.Module.__init__(self)
+        #super(CustomNetwork, self).__init__(obs_space, action_space, num_outputs, model_config,name) 
    
 
         self.nn_layers = nn.ModuleList()
@@ -47,14 +49,31 @@ class CustomNetwork(TorchModelV2,nn.Module):
 
         if(model_config["custom_model_config"]["fcnet_activation"] == "relu"):
             self.fully_connect_activation = F.relu
-        
+
     def forward(self, input_dict, state, seq_lens):
-        x = input_dict["obs"] # 32, 84, 84, 1
+        x = input_dict["obs"]["img"] # 32, 1, 84, 84
+        quad_vel = input_dict["obs"]["quad_vel"]
+        linear_vel = input_dict["obs"]["linear_vel"]
+        linear_acc = input_dict["obs"]["linear_acc"]
+        angular_vel = input_dict["obs"]["angular_vel"]
+        angular_acc = input_dict["obs"]["angular_acc"]
+
         x = x.to(torch.float32).to(device)
+        quad_vel = quad_vel.to(torch.float32).to(device)
+        linear_vel = linear_vel.to(torch.float32).to(device)
+        linear_acc = linear_acc.to(torch.float32).to(device)
+        angular_vel = angular_vel.to(torch.float32).to(device)
+        angular_acc = angular_acc.to(torch.float32).to(device)
 
         for i in range(len(self.conv_filters_dict)):
             x = self.conv_activ(self.nn_layers[i](x))
+            
         x = x.view(x.size(0), -1)
+        x = torch.cat((x, quad_vel), 1)
+        x = torch.cat((x, linear_vel), 1)
+        x = torch.cat((x, linear_acc), 1)
+        x = torch.cat((x, angular_vel), 1)
+        x = torch.cat((x, angular_acc), 1)
 
         for j in range(i+1, len(self.conv_filters_dict) + len(self.fc_hidden_dict)-1, 1) : 
             x = self.fully_connect_activation(self.nn_layers[j](x))
@@ -62,7 +81,12 @@ class CustomNetwork(TorchModelV2,nn.Module):
 
         return x, []
 
-
+class OneHotEnv(gym.core.ObservationWrapper):
+    # Override `observation` to custom process the original observation
+    # coming from the env.
+    def observation(self, observation):
+        # E.g. one-hotting a float obs [0.0, 5.0[.
+        return observation
 
 
 if __name__ == '__main__':
@@ -75,9 +99,6 @@ if __name__ == '__main__':
 
     obs_space = gym.spaces.Box(0, 255,[84,84,1])
 
-     
-    from airgym.envs.drone_env import AirSimDroneEnv
-    import numpy
     obs = numpy.ones((1, 1, 84, 84))
     obs = numpy.vstack([obs]*32)
     obs = torch.FloatTensor(obs).to(device)
@@ -86,7 +107,6 @@ if __name__ == '__main__':
 
     action_space = gym.spaces.Discrete(7)
 
-    from ray.rllib.utils.typing import ModelConfigDict
     deneme = ModelConfigDict()
     deneme["custom_model_config"] = {}
     deneme["custom_model_config"]["conv_filters"] = [[84, 4, 4],[42,4,2],[21,2,2]]

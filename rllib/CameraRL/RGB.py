@@ -10,8 +10,9 @@ from PIL import Image
 class RGB(Camera):
 
 
-    def __init__(self, client, camera_name="0"):
+    def __init__(self, client, camera_name="0", size=(84, 84)):
 
+        self.size = size
         self.client = client
         self.camera_name = camera_name
 
@@ -27,9 +28,10 @@ class RGB(Camera):
         img1d = np.fromstring(response.image_data_uint8, dtype=np.uint8) 
         # reshape array to 3 channel image array H X W X 3
         img_rgb = img1d.reshape(response.height, response.width, 3)
-
-        img_rgb_resized = Image.fromarray(img_rgb).resize((84, 84)).convert("L")
-        img_rgb = np.array(img_rgb_resized).reshape(1, 84, 84)
+        img_rgb_resized = Image.fromarray(img_rgb).resize(self.size).convert("L")
+        obs_size = np.array(self.size, dtype=np.int32)
+        obs_size = np.insert(obs_size, 0, 1)
+        img_rgb = np.array(img_rgb_resized).reshape(obs_size)
 
         return img_rgb
 

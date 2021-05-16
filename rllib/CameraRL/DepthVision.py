@@ -14,10 +14,11 @@ class DepthVision(Camera):
      The pixels with pure white means depth of 100m or more while pure black means depth of 0 meters.
      """
 
-    def __init__(self, client, camera_name="0"):
+    def __init__(self, client, camera_name="0", size=(84, 84)):
 
         self.client = client
         self.camera_name = camera_name
+        self.size = size
 
 
     def fetch_single_img(self):
@@ -33,9 +34,10 @@ class DepthVision(Camera):
         # reshape array to 2 channel image array H X W x 1
         img_reshaped = img1d.reshape(response.height, response.width)
         img_depth = np.array(img_reshaped * 255, dtype=np.float32)
-
-        img_depth_resized = Image.fromarray(img_depth).resize((84, 84)).convert("L")
-        img_depth = np.array(img_depth_resized).reshape(1, 84, 84)
+        img_depth_resized = Image.fromarray(img_depth).resize((self.size)).convert("L")
+        obs_size = np.array(self.size, dtype=np.int32)
+        obs_size = np.insert(obs_size, 0, 1)
+        img_depth = np.array(img_depth_resized).reshape(obs_size)
 
         return img_depth
 
