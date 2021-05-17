@@ -12,13 +12,14 @@ import torch
 from gym import spaces
 #sys.path.append('D:\RL\RLLIB') # TODO Investigate whether is this necessary or not
 
-from CustomModels.CustomModel import CustomNetwork
+from CustomModels.jointModel import JointModel
 from ray.rllib.utils.typing import ModelConfigDict
+from config.model_config import getModelConfig
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--alg", default="DQN", help="RL algorithm")
-    parser.add_argument("--network", default="VGG", help="Vision network")
+    parser.add_argument("--network", default="joint", help="Vision network")
     args = parser.parse_args()
 
     global ALG, NETWORK
@@ -35,7 +36,6 @@ if __name__ == "__main__":
     env_config = {
         "observation_space": spaces.Dict({
             "img": spaces.Box(0, 255, [1, 84, 84]),
-            "quad_vel": spaces.Box(low=-100, high=100, shape=(3,), dtype=np.float64),
             "linear_vel": spaces.Box(low=-100, high=100, shape=(3,), dtype=np.float64),
             "linear_acc": spaces.Box(low=-100, high=100, shape=(3,), dtype=np.float64),
             "angular_vel": spaces.Box(low=-100, high=100, shape=(3,), dtype=np.float64),
@@ -47,22 +47,17 @@ if __name__ == "__main__":
         "image_size": [84, 84]
     }    
 
-    register_env("drone_env", 
-                 lambda config: AirSimDroneEnv(env_config))
+    register_env("drone_env", lambda config: AirSimDroneEnv(env_config))
 
-    ModelCatalog.register_custom_model('CustomNetwork', CustomNetwork)
+    ModelCatalog.register_custom_model('JointModel', JointModel)
 
-    modelConfig = ModelConfigDict()
-    modelConfig["conv_filters"] = [[84, 4, 4],[42, 4, 2],[21, 2, 2]]
-    modelConfig["conv_activation"] = "relu"
-    modelConfig["fcnet_activation"] = "relu"
-    modelConfig["fcnet_hiddens"] = [[21 * 4 * 4 + 5 * 3, 171], [171, num_actions]]
+    modelConfig = getModelConfig(NETWORK)
 
     config = getConfig(ALG)
     config["lr"] = 1e-4
     config["env"] = "drone_env"
     config["num_gpus"] = 1 if torch.cuda.is_available() else 0
-    config["model"] = {"custom_model": "CustomNetwork",
+    config["model"] = {"custom_model": "JointModel",
                        "custom_model_config": modelConfig
                         }
 

@@ -53,8 +53,6 @@ class AirSimDroneEnv(gym.Env):
     def _get_obs(self):
         img = self.camera.fetch_single_img()
         #img = spaces.Box(low=0, high=255, img)
-    
-        quad_vel = self.drone.getMultirotorState().kinematics_estimated.linear_velocity
 
         linear_vel = self.drone.getMultirotorState().kinematics_estimated.linear_velocity
         linear_acc = self.drone.getMultirotorState().kinematics_estimated.linear_acceleration
@@ -71,11 +69,10 @@ class AirSimDroneEnv(gym.Env):
 
         obs = {
             "img": img,
-            "quad_vel": np.array([quad_vel.x_val, quad_vel.y_val, quad_vel.z_val]),
-            "linear_vel": np.array([0, 0, 0]),
-            "linear_acc": np.array([0, 0, 0]),
-            "angular_vel": np.array([0, 0, 0]),
-            "angular_acc": np.array([0, 0, 0]),
+            "linear_vel": np.array([linear_vel.x_val, linear_vel.y_val, linear_vel.z_val]),
+            "linear_acc": np.array([linear_acc.x_val, linear_acc.y_val, linear_acc.z_val]),
+            "angular_vel": np.array([angular_vel.x_val, angular_vel.y_val, angular_vel.z_val]),
+            "angular_acc": np.array([angular_acc.x_val, angular_acc.y_val, angular_acc.z_val]),
         }
       
         return obs
