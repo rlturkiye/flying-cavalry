@@ -56,7 +56,7 @@ COMMON_CONFIG: TrainerConfigDict = {
     # Training batch size, if applicable. Should be >= rollout_fragment_length.
     # Samples batches will be concatenated together to a batch of this size,
     # which is then passed to SGD.
-    "train_batch_size": 200,
+    "train_batch_size": 128,
     # Arguments to pass to the policy model. See models/catalog.py for a full
     # list of the available model options.
     "model": MODEL_DEFAULTS,

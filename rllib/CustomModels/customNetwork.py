@@ -24,17 +24,16 @@ from ray.rllib.utils.typing import ModelConfigDict
 
 
 # num_outputs/num_actions = 7
-class JointModel(TorchModelV2,nn.Module): 
+class CustomNetwork(TorchModelV2,nn.Module): 
 
     def __init__(self, obs_space, action_space, num_outputs, model_config, name): 
         TorchModelV2.__init__(self, obs_space, action_space, num_outputs, model_config, name)
         nn.Module.__init__(self)
-        #super(CustomNetwork, self).__init__(obs_space, action_space, num_outputs, model_config,name) 
    
         self.counter = 0
         self.nn_layers = nn.ModuleList()
         self.conv_filters_dict = model_config["custom_model_config"]["conv_filters"]
-        input_c = 1
+        input_c = model_config["custom_model_config"]["inChannel"]
         for conv in range(len(self.conv_filters_dict)): 
             self.nn_layers.append(nn.Conv2d(input_c, self.conv_filters_dict[conv][0], kernel_size= self.conv_filters_dict[conv][1], stride= self.conv_filters_dict[conv][2], padding=self.conv_filters_dict[conv][3] ))
             if self.conv_filters_dict[conv][4][0] == 1:
@@ -55,7 +54,7 @@ class JointModel(TorchModelV2,nn.Module):
             self.fully_connect_activation = F.relu
 
     def forward(self, input_dict, state, seq_lens):
-        x = input_dict["obs"]["img"] # 32, 1, 84, 84
+        x = input_dict["obs"]["img"] # 32, inChannel, img_shape, img_shape
         linear_vel = input_dict["obs"]["linear_vel"]
         linear_acc = input_dict["obs"]["linear_acc"]
         angular_vel = input_dict["obs"]["angular_vel"]
@@ -76,7 +75,7 @@ class JointModel(TorchModelV2,nn.Module):
         x = torch.cat((x, angular_vel), 1)
         x = torch.cat((x, angular_acc), 1)
 
-        for j in range(i+1, self.counter + len(self.fc_hidden_dict)-1, 1) : 
+        for j in range(i+1, self.counter + len(self.fc_hidden_dict)-1, 1): 
             x = self.fully_connect_activation(self.nn_layers[j](x))
         x = self.nn_layers[-1](x)
 

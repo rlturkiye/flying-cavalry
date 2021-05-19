@@ -20,16 +20,19 @@ class AirSimDroneEnv(gym.Env):
 
         self.observation_space = config["observation_space"]
         self.action_space = config["action_space"]
-        self.useDepth = config["use_depth"]
+        self.onlySensor = config["onlySensor"]
+        if not self.onlySensor:
+            self.useDepth = config["use_depth"]
+            self.image_size = config["image_size"]
         self.step_length = config["step_length"]
-        self.image_size = config["image_size"]
 
         self.drone = airsim.MultirotorClient()
 
-        if self.useDepth:
-            self.camera = DepthVision(client=self.drone, camera_name="0", size=self.image_size)
-        else:
-            self.camera = RGB(client=self.drone, camera_name="0", size=self.image_size)        
+        if not self.onlySensor:
+            if self.useDepth:
+                self.camera = DepthVision(client=self.drone, camera_name="0", size=self.image_size)
+            else:
+                self.camera = RGB(client=self.drone, camera_name="0", size=self.image_size)        
         
         self.last_dist = self.get_distance(self.drone.getMultirotorState().kinematics_estimated.position)
         self.quad_offset = (0, 0, 0)
@@ -51,8 +54,8 @@ class AirSimDroneEnv(gym.Env):
         self.last_dist = self.get_distance(self.drone.getMultirotorState().kinematics_estimated.position)
 
     def _get_obs(self):
-        img = self.camera.fetch_single_img()
-        #img = spaces.Box(low=0, high=255, img)
+        if not self.onlySensor:
+            img = self.camera.fetch_single_img()
 
         linear_vel = self.drone.getMultirotorState().kinematics_estimated.linear_velocity
         linear_acc = self.drone.getMultirotorState().kinematics_estimated.linear_acceleration
@@ -67,13 +70,23 @@ class AirSimDroneEnv(gym.Env):
         orient = self.drone.getMultirotorState().kinematics_estimated.orientation
 
 
-        obs = {
-            "img": img,
-            "linear_vel": np.array([linear_vel.x_val, linear_vel.y_val, linear_vel.z_val]),
-            "linear_acc": np.array([linear_acc.x_val, linear_acc.y_val, linear_acc.z_val]),
-            "angular_vel": np.array([angular_vel.x_val, angular_vel.y_val, angular_vel.z_val]),
-            "angular_acc": np.array([angular_acc.x_val, angular_acc.y_val, angular_acc.z_val]),
-        }
+        if not self.onlySensor:
+            obs = {
+                "img": img,
+                "linear_vel": np.array([linear_vel.x_val, linear_vel.y_val, linear_vel.z_val]),
+                "linear_acc": np.array([linear_acc.x_val, linear_acc.y_val, linear_acc.z_val]),
+                "angular_vel": np.array([angular_vel.x_val, angular_vel.y_val, angular_vel.z_val]),
+                "angular_acc": np.array([angular_acc.x_val, angular_acc.y_val, angular_acc.z_val]),
+            }
+        else:
+            obs = {
+                "linear_vel": np.array([linear_vel.x_val, linear_vel.y_val, linear_vel.z_val]),
+                "linear_acc": np.array([linear_acc.x_val, linear_acc.y_val, linear_acc.z_val]),
+                "angular_vel": np.array([angular_vel.x_val, angular_vel.y_val, angular_vel.z_val]),
+                "angular_acc": np.array([angular_acc.x_val, angular_acc.y_val, angular_acc.z_val]),
+            }
+
+
       
         return obs
 
@@ -98,9 +111,9 @@ class AirSimDroneEnv(gym.Env):
             if dist < 10:
                 reward = 500
             elif diff > 0:
-                reward += diff * 3
+                reward += diff
             else:
-                reward += diff * 3
+                reward += diff
 
             self.last_dist = dist
 
@@ -179,7 +192,7 @@ class AirSimDroneEnv(gym.Env):
         pos2 = self.drone.simGetObjectPose("SM_House_86").position
         self.geoFenceCoords.append(pos2.x_val)
         self.geoFenceCoords.append(pos2.y_val)
-        print("GeoFenceCoords:", self.geoFenceCoords)
+        #print("GeoFenceCoords:", self.geoFenceCoords)
 
     def close(self):
         print("close func called")
