@@ -18,8 +18,13 @@ def transform_angle(yaw):
             break
     return degree
 print(transform_angle(0))
-
-
+geoFenceCoords = [0, 0, 0, 0]
+geofence_corners = ((geoFenceCoords[0], geoFenceCoords[1]),
+                    (geoFenceCoords[0], geoFenceCoords[3]),
+                    (geoFenceCoords[2], geoFenceCoords[3]),
+                    (geoFenceCoords[2], geoFenceCoords[1]))
+dx = geofence_corners[0][0] - 1
+dy = geofence_corners[0][1] - 1
 
 """drone.reset()
 drone.enableApiControl(True)
