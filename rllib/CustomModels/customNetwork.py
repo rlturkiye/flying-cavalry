@@ -35,7 +35,7 @@ class CustomNetwork(TorchModelV2,nn.Module):
         self.conv_filters_dict = model_config["custom_model_config"]["conv_filters"]
         input_c = model_config["custom_model_config"]["inChannel"]
         for conv in range(len(self.conv_filters_dict)): 
-            self.nn_layers.append(nn.Conv2d(input_c, self.conv_filters_dict[conv][0], kernel_size= self.conv_filters_dict[conv][1], stride= self.conv_filters_dict[conv][2], padding=self.conv_filters_dict[conv][3] ))
+            self.nn_layers.append(nn.Conv2d(input_c, self.conv_filters_dict[conv][0], kernel_size= self.conv_filters_dict[conv][1], stride=self.conv_filters_dict[conv][2], padding=self.conv_filters_dict[conv][3] ))
             if self.conv_filters_dict[conv][4][0] == 1:
                 self.nn_layers.append(nn.MaxPool2d(kernel_size=self.conv_filters_dict[conv][4][1], stride=self.conv_filters_dict[conv][4][2]))
                 self.counter += 1

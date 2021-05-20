@@ -19,13 +19,13 @@ if __name__ == "__main__":
 
     ray.init(local_mode=True)
 
-    num_actions = 11
+    num_actions = 6
     step_length=10
     image_width=256
     image_height=256
 
     config = getConfig(ALG, NETWORK, num_actions, step_length, image_width, image_height)
-    config["lr"] = 1e-2
+    config["lr"] = 1e-4
     config["timesteps_per_iteration"] = 32
     config["learning_starts"] = 32
     config["train_batch_size"] = 32

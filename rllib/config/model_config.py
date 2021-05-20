@@ -30,7 +30,7 @@ def vgg16(num_actions, inChannel):
                                    [256, 3, 1, 1, [0]],
                                    [256, 3, 1, 1, [1, 2, 2]]]   
     modelConfig["conv_activation"] = "relu"
-    modelConfig["fcnet_hiddens"] = [[256 * 32 * 32 + 6 * 3 + 4, 64], [64, num_actions]]
+    modelConfig["fcnet_hiddens"] = [[256 * 32 * 32 + 4 * 3 + 4, 64], [64, num_actions]]
     modelConfig["fcnet_activation"] = "relu"
 
     return modelConfig
@@ -43,7 +43,7 @@ def jointModel(num_actions, inChannel):
                                    [64, 4, 2, 0, [0]],
                                    [128, 2, 2, 0, [0]]]
     modelConfig["conv_activation"] = "relu"
-    modelConfig["fcnet_hiddens"] = [[128 * 15 * 15 + 6 * 3 + 4, 64], [64, num_actions]]
+    modelConfig["fcnet_hiddens"] = [[128 * 15 * 15 + 4 * 3 + 4, 64], [64, num_actions]]
     modelConfig["fcnet_activation"] = "relu"
 
     return modelConfig
@@ -61,8 +61,6 @@ def registerEnv(num_actions, use_depth, step_length, image_width, image_height):
     env_config = {
         "observation_space": spaces.Dict({
             "img": spaces.Box(0, 255, [1, image_width, image_height]) if use_depth else spaces.Box(0, 255, [3, image_width, image_height]),
-            "pos": spaces.Box(low=-500, high=500, shape=(3,), dtype=np.float64),
-            "target_pos": spaces.Box(low=-500, high=500, shape=(3,), dtype=np.float64),
             "target_dist": spaces.Box(low=0, high=500, shape=(4,), dtype=np.float64),
             "linear_vel": spaces.Box(low=-100, high=100, shape=(3,), dtype=np.float64),
             "linear_acc": spaces.Box(low=-100, high=100, shape=(3,), dtype=np.float64),
@@ -81,9 +79,7 @@ def registerEnv(num_actions, use_depth, step_length, image_width, image_height):
 def registerSensorEnv(num_actions, step_length):
     env_config = {
         "observation_space": spaces.Dict({
-            "pos": spaces.Box(low=-500, high=500, shape=(3,), dtype=np.float64),
-            "target_pos": spaces.Box(low=-500, high=500, shape=(3,), dtype=np.float64),
-            "target_dist": spaces.Box(low=0, high=500, shape=(4,), dtype=np.float64),
+            "target_dist": spaces.Box(low=-500, high=500, shape=(4,), dtype=np.float64),
             "linear_vel": spaces.Box(low=-100, high=100, shape=(3,), dtype=np.float64),
             "linear_acc": spaces.Box(low=-100, high=100, shape=(3,), dtype=np.float64),
             "angular_vel": spaces.Box(low=-100, high=100, shape=(3,), dtype=np.float64),

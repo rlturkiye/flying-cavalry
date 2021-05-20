@@ -3,9 +3,25 @@ from airsim.types import YawMode
 import numpy as np
 import random
 from time import sleep
+import math
 
-drone = airsim.MultirotorClient()
-drone.reset()
+drone = airsim.CarClient()
+
+#print(drone.getCarState().kinematics_estimated.position)
+#print(drone.simGetObjectPose("KargoArabasi").position)
+#print(random.randint(0, 4))
+def transform_angle(yaw):
+    phi = np.linspace(-1, 1, 360)
+    for i, value in enumerate(phi):
+        if value >= yaw:
+            degree = i
+            break
+    return degree
+print(transform_angle(0))
+
+
+
+"""drone.reset()
 drone.enableApiControl(True)
 drone.armDisarm(True)
 drone.takeoffAsync()
@@ -55,4 +71,4 @@ while True:
         yaw_mode=yawMode
     )
     sleep(1)
-
+"""
