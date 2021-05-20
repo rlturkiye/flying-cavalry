@@ -27,10 +27,10 @@ if __name__ == "__main__":
 
     config = getConfig(ALG, NETWORK, num_actions, step_length, image_width, image_height)
     config["lr"] = 1e-4
-    config["timesteps_per_iteration"] = 5
-    config["learning_starts"] = 5
-    config["train_batch_size"] = 5
-    config["target_network_update_freq"] = 5
+    config["timesteps_per_iteration"] = 32
+    config["learning_starts"] = 32
+    config["train_batch_size"] = 32
+    config["target_network_update_freq"] = 512
     config["exploration_config"]["epsilon_timesteps"] = 5000
     config["env"] = "drone_env"
     config["num_gpus"] = 1 if torch.cuda.is_available() else 0

@@ -10,3 +10,4 @@ pycache
 .vscode
 __pycache__
 RLLIB/.idea/
+RLLIB/checkpoints/
