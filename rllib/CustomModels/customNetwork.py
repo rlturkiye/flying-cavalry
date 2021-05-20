@@ -55,12 +55,18 @@ class CustomNetwork(TorchModelV2,nn.Module):
 
     def forward(self, input_dict, state, seq_lens):
         x = input_dict["obs"]["img"] # 32, inChannel, img_shape, img_shape
+        pos = input_dict["obs"]["pos"]
+        target_pos = input_dict["obs"]["target_pos"]
+        target_dist = input_dict["obs"]["target_dist"]
         linear_vel = input_dict["obs"]["linear_vel"]
         linear_acc = input_dict["obs"]["linear_acc"]
         angular_vel = input_dict["obs"]["angular_vel"]
         angular_acc = input_dict["obs"]["angular_acc"]
 
         x = x.to(torch.float32).to(device)
+        pos = pos.to(torch.float32).to(device)
+        target_pos = target_pos.to(torch.float32).to(device)
+        target_dist = target_dist.to(torch.float32).to(device)
         linear_vel = linear_vel.to(torch.float32).to(device)
         linear_acc = linear_acc.to(torch.float32).to(device)
         angular_vel = angular_vel.to(torch.float32).to(device)
@@ -70,6 +76,9 @@ class CustomNetwork(TorchModelV2,nn.Module):
             x = self.conv_activ(self.nn_layers[i](x))
             
         x = x.view(x.size(0), -1)
+        x = torch.cat((x, pos), 1)
+        x = torch.cat((x, target_pos), 1)
+        x = torch.cat((x, target_dist), 1)
         x = torch.cat((x, linear_vel), 1)
         x = torch.cat((x, linear_acc), 1)
         x = torch.cat((x, angular_vel), 1)

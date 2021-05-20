@@ -40,17 +40,26 @@ class SensorNetwork(TorchModelV2,nn.Module):
             self.fully_connect_activation = F.relu
 
     def forward(self, input_dict, state, seq_lens):
+        pos = input_dict["obs"]["pos"]
+        target_pos = input_dict["obs"]["target_pos"]
+        target_dist = input_dict["obs"]["target_dist"]
         linear_vel = input_dict["obs"]["linear_vel"]
         linear_acc = input_dict["obs"]["linear_acc"]
         angular_vel = input_dict["obs"]["angular_vel"]
         angular_acc = input_dict["obs"]["angular_acc"]
 
+        pos = pos.to(torch.float32).to(device)
+        target_pos = target_pos.to(torch.float32).to(device)
+        target_dist = target_dist.to(torch.float32).to(device)
         linear_vel = linear_vel.to(torch.float32).to(device)
         linear_acc = linear_acc.to(torch.float32).to(device)
         angular_vel = angular_vel.to(torch.float32).to(device)
         angular_acc = angular_acc.to(torch.float32).to(device)
             
-        x = linear_vel
+        x = pos
+        x = torch.cat((x, target_pos), 1)
+        x = torch.cat((x, target_dist), 1)
+        x = torch.cat((x, linear_vel), 1)
         x = torch.cat((x, linear_acc), 1)
         x = torch.cat((x, angular_vel), 1)
         x = torch.cat((x, angular_acc), 1)
