@@ -112,7 +112,7 @@ class AirSimDroneEnv(gym.Env):
         """Compute reward"""
 
         reward = -1.5
-
+        col=self.drone.simGetCollisionInfo()
         collision = self.drone.simGetCollisionInfo().has_collided
         quad_state = self.drone.getMultirotorState().kinematics_estimated.position
 
@@ -125,12 +125,13 @@ class AirSimDroneEnv(gym.Env):
         else:
             dist, dx, dy, dz = self.get_distance(quad_state)
             diff = self.last_distances[0] - dist
-            print(self.last_distances[0], dist, diff)
+            #print(self.last_distances[0], dist, diff)
 
             if dist < 20:
                 if self.current_final:
                     reward = 500
                 else:
+                    print("current_final = True")
                     reward = 499
                     self.current_final = True
                     self.target = self.target_house_pos
@@ -140,7 +141,8 @@ class AirSimDroneEnv(gym.Env):
             else:
                 reward += diff
 
-            self.last_distances = [dist, dx, dy, dz]
+            if not reward == 499:
+                self.last_distances = [dist, dx, dy, dz]
 
         done = 0
         if reward <= -50:
@@ -160,9 +162,16 @@ class AirSimDroneEnv(gym.Env):
         vel = self.drone.getMultirotorState().kinematics_estimated.linear_velocity
         zpos = self.drone.getMultirotorState().kinematics_estimated.position.z_val
 
-        if self.total_check % self.total_step == 0:
+        if self.total_step % self.total_step == 0:
             degree = self.calculate_angle()
             yawMode = YawMode(is_rate=True, yaw_or_rate=degree)
+            self.drone.moveByVelocityZAsync(
+            vel.x_val,
+            vel.y_val,
+            zpos,
+            0.5,
+            yaw_mode=yawMode)
+            time.sleep(.5)
 
         """self.drone.moveByVelocityZAsync(
             vel.x_val + quad_offset[0],
@@ -172,12 +181,7 @@ class AirSimDroneEnv(gym.Env):
             yaw_mode=yawMode
         )"""
 
-        self.drone.moveByVelocityZAsync(
-            vel.x_val,
-            vel.y_val,
-            zpos,
-            0.5,
-            yaw_mode=yawMode)
+        
 
         
         self.drone.moveToPositionAsync(self.target[0], self.target[1], -13, 10)
