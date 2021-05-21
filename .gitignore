@@ -6,8 +6,11 @@ unreal/
 *.mp4
 *.png
 *.tiff
+.idea
 pycache
 .vscode
 __pycache__
 RLLIB/.idea/
-RLLIB/checkpoints/
+rllib/checkpoints/*
+rllib/checkpoints/
+rllib/checkpoints
