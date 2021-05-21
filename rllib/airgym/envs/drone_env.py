@@ -115,16 +115,16 @@ class AirSimDroneEnv(gym.Env):
         """Compute reward"""
 
         reward = -1.5
-        col=self.drone.simGetCollisionInfo()
+        #col=self.drone.simGetCollisionInfo()
         collision = self.drone.simGetCollisionInfo().has_collided
         quad_state = self.drone.getMultirotorState().kinematics_estimated.position
 
         if collision:
             reward = -100
-            print("collision")
+            print("Collision")
         elif not self.inGeoFence(quad_state):
             reward = -100
-            print("not in geofence")
+            print("Not in geofence")
         else:
             dist, dx, dy, dz = self.get_distance(quad_state)
             diff = self.last_distances[0] - dist
@@ -145,11 +145,12 @@ class AirSimDroneEnv(gym.Env):
 
         done = 0
         if reward <= -50:
-            print("reward -50")
+            print("terminate: 1")
             done = 1
         elif reward > 499:
             done = 1
-        print(reward, done)
+            print("terminate: 2")
+        print("Reward:", reward, "Done:", done, "current_final:", self.current_final)
         return reward, done
 
     def step(self, action):
@@ -159,17 +160,17 @@ class AirSimDroneEnv(gym.Env):
         if self.total_step % self.total_check == 0:
             self.correctOrientation()
         
-        """quad_offset = self.interpret_action(action)
+        quad_offset = self.interpret_action(action)
         vel = self.drone.getMultirotorState().kinematics_estimated.linear_velocity
         zpos = self.drone.getMultirotorState().kinematics_estimated.position.z_val
         self.drone.moveByVelocityZAsync(
             vel.x_val + quad_offset[0],
             vel.y_val + quad_offset[1],
             zpos + quad_offset[2],
-            10
-        )"""
+            1
+        )
 
-        self.drone.moveToPositionAsync(self.target[0], self.target[1], -13, 10)
+        #self.drone.moveToPositionAsync(self.target[0], self.target[1], -13, 10)
         
         time.sleep(1)
 
