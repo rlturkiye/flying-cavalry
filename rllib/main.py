@@ -4,6 +4,7 @@ from ray.tune import CLIReporter
 
 from config.config_handler import getConfig
 from commit_message import intro_repository
+from determinism import make_deterministic
 
 import argparse
 import torch
@@ -14,17 +15,7 @@ SEED_VALUE = 5
 TOTAL_STEP = 1000 # total steps 
 TOTAL_TRAIN_ITER = 1000000 # how many times network updated
 
-def make_deterministic(seed):
 
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    # see https://github.com/pytorch/pytorch/issues/47672
-    cuda_version = torch.version.cuda
-    if cuda_version is not None and float(torch.version.cuda) >= 10.2:
-        os.environ['CUBLAS_WORKSPACE_CONFIG'] = '4096:8'
-    else:
-        torch.set_deterministic(True)  #Not all Operations support this.
-    torch.backends.cudnn.deterministic = True #This is only for Convolution no problem
 
 def main():
     parser = argparse.ArgumentParser()
