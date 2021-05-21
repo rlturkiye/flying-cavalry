@@ -11,6 +11,4 @@ pycache
 .vscode
 __pycache__
 RLLIB/.idea/
-rllib/checkpoints/*
-rllib/checkpoints/
-rllib/checkpoints
+checkpoints/
