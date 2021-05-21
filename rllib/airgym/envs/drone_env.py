@@ -42,7 +42,7 @@ class AirSimDroneEnv(gym.Env):
         self.total_step = 0
         self.total_check = 5
         self.current_final = False
-        self.starting_positions = ([293, -349, -2], [-212, 7, -2], [23, -14, -2], [-216, -362, -2], [160, -66, -2])
+        self.starting_positions = ([293, -349, -2]) #, [-212, 7, -2], [23, -14, -2], [-216, -362, -2], [160, -66, -2])
         self.houses = ["SM_House_27", "SM_House_85", "SM_House_22", "SM_House_287", "SM_House_4333"]
         self._setup_flight()
 
@@ -134,7 +134,7 @@ class AirSimDroneEnv(gym.Env):
                 if self.current_final:
                     reward = 500
                 else:
-                    reward = 499
+                    reward = 500 #499 du 500 yaptik denemek amacli.
                     self.current_final = True
                     self.target = self.target_house_pos
                     self.last_distances = self.get_distance(quad_state)

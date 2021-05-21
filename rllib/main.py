@@ -11,7 +11,7 @@ import os
 import numpy as np
 
 SEED_VALUE = 5
-TOTAL_STEP = 1000 # total steps 
+TOTAL_STEP = 7000000 # total steps 
 TOTAL_TRAIN_ITER = 1000000 # how many times network updated
 
 def make_deterministic(seed):
@@ -29,7 +29,7 @@ def make_deterministic(seed):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--alg", default="DQN", help="RL algorithm")
-    parser.add_argument("--network", default="SENSOR", help="Vision network")
+    parser.add_argument("--network", default="RGB", help="Vision network")
     args = parser.parse_args()
 
     global ALG, NETWORK
@@ -55,9 +55,9 @@ if __name__ == "__main__":
 
     config = getConfig(ALG, NETWORK, num_actions, step_length, image_width, image_height)
     config["lr"] = 1e-4
-    config["timesteps_per_iteration"] = 32
-    config["learning_starts"] = 32
-    config["train_batch_size"] = 32
+    config["timesteps_per_iteration"] = 64
+    config["learning_starts"] = 256
+    config["train_batch_size"] = 256
     config["target_network_update_freq"] = 512
     config["exploration_config"]["epsilon_timesteps"] = 5000
     config["env"] = "drone_env"
