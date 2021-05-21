@@ -12,7 +12,7 @@ from PIL import Image
 from CameraRL.RGB import RGB
 from CameraRL.DepthVision import DepthVision
 import random
-
+import math
 
 # ip_address, step_length, image_shape, useDepth 
 # spaces.Discrete(7)
@@ -56,15 +56,18 @@ class AirSimDroneEnv(gym.Env):
         self.setGeoFenceCoords()
         self.current_final = False
         self.starting_pos = self.starting_positions[random.randint(0, 4)]
+        # teleport the drone
+        pose = self.drone.simGetVehiclePose()
+        pose.position.x_val = self.starting_pos[0]
+        pose.position.y_val = self.starting_pos[1]
+        pose.position.z_val = self.starting_pos[2]
+        self.drone.simSetVehiclePose(pose, True)
+        time.sleep(1)
         quad_state = self.drone.getMultirotorState().kinematics_estimated.position
-        # move up
-        self.drone.moveToPositionAsync(quad_state.x_val, quad_state.y_val, -15, 10).join()
-        # go to starting position
-        self.drone.moveToPositionAsync(self.starting_pos[0], self.starting_pos[1], -15, 25).join()
-        quad_state = self.drone.getMultirotorState().kinematics_estimated.position
-        # move down
-        self.drone.moveToPositionAsync(quad_state.x_val, quad_state.y_val, -7, 10).join()
-        time.sleep(2)
+        # move up otherwise the drone will stuck
+        self.drone.moveToPositionAsync(quad_state.x_val, quad_state.y_val, -7, 5).join()
+        # correct orientation
+        self.correctOrientation()
         # set target house pos
         pos = self.drone.simGetObjectPose(self.houses[0]).position 
         pos = [pos.x_val, pos.y_val, pos.z_val]
@@ -125,13 +128,12 @@ class AirSimDroneEnv(gym.Env):
         else:
             dist, dx, dy, dz = self.get_distance(quad_state)
             diff = self.last_distances[0] - dist
-            #print(self.last_distances[0], dist, diff)
+            self.last_distances = [dist, dx, dy, dz]
 
             if dist < 20:
                 if self.current_final:
                     reward = 500
                 else:
-                    print("current_final = True")
                     reward = 499
                     self.current_final = True
                     self.target = self.target_house_pos
@@ -140,9 +142,6 @@ class AirSimDroneEnv(gym.Env):
                 reward += diff
             else:
                 reward += diff
-
-            if not reward == 499:
-                self.last_distances = [dist, dx, dy, dz]
 
         done = 0
         if reward <= -50:
@@ -157,35 +156,21 @@ class AirSimDroneEnv(gym.Env):
         """Step"""
         self.calculate_target_location()
 
-        quad_offset = self.interpret_action(action)
-        yawMode = YawMode(is_rate=True, yaw_or_rate=0)
+        if self.total_step % self.total_check == 0:
+            self.correctOrientation()
+        
+        """quad_offset = self.interpret_action(action)
         vel = self.drone.getMultirotorState().kinematics_estimated.linear_velocity
         zpos = self.drone.getMultirotorState().kinematics_estimated.position.z_val
-
-        if self.total_step % self.total_step == 0:
-            degree = self.calculate_angle()
-            yawMode = YawMode(is_rate=True, yaw_or_rate=degree)
-            self.drone.moveByVelocityZAsync(
-            vel.x_val,
-            vel.y_val,
-            zpos,
-            0.5,
-            yaw_mode=yawMode)
-            time.sleep(.5)
-
-        """self.drone.moveByVelocityZAsync(
+        self.drone.moveByVelocityZAsync(
             vel.x_val + quad_offset[0],
             vel.y_val + quad_offset[1],
             zpos + quad_offset[2],
-            10,
-            yaw_mode=yawMode
+            10
         )"""
 
-        
-
-        
         self.drone.moveToPositionAsync(self.target[0], self.target[1], -13, 10)
-
+        
         time.sleep(1)
 
         reward, done = self._compute_reward()
@@ -199,7 +184,7 @@ class AirSimDroneEnv(gym.Env):
 
     def reset(self):
         print(self.total_step)
-        self.total_step = 1
+        self.total_step = 0
         self._setup_flight()
         return self._get_obs()
 
@@ -291,25 +276,38 @@ class AirSimDroneEnv(gym.Env):
 
     def calculate_angle(self):
         pos = self.drone.getMultirotorState().kinematics_estimated.position
-        orient = self.drone.getMultirotorState().kinematics_estimated.orientation
-        degree = self.transform_angle(orient.z_val)
-        degree2 = self.transform_angle((self.target[1] - pos.y_val) / (self.target[0] - pos.x_val))
-        print("degree1:", degree, "degree2:", degree2, "diff:", degree2 - degree)
-        return degree2 - degree
+        target_degree = math.degrees(math.atan2((self.target[1] - pos.y_val) , (self.target[0] - pos.x_val)))
+        return target_degree
 
     def calculate_target_location(self):
         if not self.current_final:
             pos = self.drone.simGetObjectPose("KargoArabasi").position
             self.target = [pos.x_val, pos.y_val, pos.z_val]
 
-    def transform_angle(self, yaw):
+    """def transform_angle(self, yaw):
         phi = np.linspace(-1, 1, 360)
         degree = 360
         for i, value in enumerate(phi):
             if value >= yaw:
                 degree = i
                 break
-        return degree
+        return degree"""
+
+    def correctOrientation(self):
+        yawMode = YawMode(is_rate=False, yaw_or_rate=0)
+        vel = self.drone.getMultirotorState().kinematics_estimated.linear_velocity
+        zpos = self.drone.getMultirotorState().kinematics_estimated.position.z_val
+        degree = self.calculate_angle()
+        if degree < 10:
+            pass
+        yawMode = YawMode(is_rate=False, yaw_or_rate=degree)
+        self.drone.moveByVelocityZAsync(
+        vel.x_val,
+        vel.y_val,
+        zpos,
+        1,
+        yaw_mode=yawMode)
+        time.sleep(1)
 
     def close(self):
         print("close func called")
