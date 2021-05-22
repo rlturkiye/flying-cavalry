@@ -83,8 +83,8 @@ if __name__ == "__main__":
      # Setup the stopping condition
 
     checkpoint_path = os.path.join(os.getcwd(), "checkpoints")
-    config_str = intro_repository(config)
-    print(config_str)
+    #config_str = intro_repository(config)
+    #print(config_str)
     results = tune.run(ALG, config=config,
                             checkpoint_freq=5, 
                             max_failures = 5,
