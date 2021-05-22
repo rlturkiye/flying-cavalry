@@ -9,6 +9,7 @@ import argparse
 import torch
 import os
 import numpy as np
+import subprocess
 
 SEED_VALUE = 5
 TOTAL_STEP = 7000000 # total steps 
@@ -36,7 +37,13 @@ def main():
     ALG = args.alg
     NETWORK = args.network
 
+GOOGLE_COLLAB = True
+
 if __name__ == "__main__":
+    # Start The Simulation - Mainly for google collab
+    if GOOGLE_COLLAB:
+        proc_settings = subprocess.call('mkdir -p /home/RLTurkey/Documents/AirSim/ && cp settings.json /home/RLTurkey/Documents/AirSim', shell=True)
+        proc = subprocess.Popen('./content/LinuxNoEditor/RLTurkiyeVersion1.sh', shell=True)
     main()
     if torch.cuda.is_available():
         print("## CUDA available")
@@ -83,6 +90,8 @@ if __name__ == "__main__":
      # Setup the stopping condition
 
     checkpoint_path = os.path.join(os.getcwd(), "checkpoints")
+    if GOOGLE_COLLAB:
+        checkpoint_path = os.path.join("/content/drive/MyDrive/","checkpoints")
     #config_str = intro_repository(config)
     #print(config_str)
     results = tune.run(ALG, config=config,
