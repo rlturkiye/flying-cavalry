@@ -34,7 +34,7 @@ def make_deterministic(seed):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--alg", default="DQN", help="RL algorithm",
-                        choices=["DQN", "PPO", "DDQN"])
+                        choices=["DQN", "PPO", "DDPG"])
     parser.add_argument("--network", default="SENSOR", help="Vision network",
                         choices=["RGB", "DEPTH", "SENSOR", "VGG-16"])
     args = parser.parse_args()
