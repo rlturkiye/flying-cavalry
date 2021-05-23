@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import ray
 from ray import tune
 from ray.tune import CLIReporter
@@ -11,8 +13,9 @@ import os
 import numpy as np
 
 SEED_VALUE = 5
-TOTAL_STEP = 1000 # total steps 
-TOTAL_TRAIN_ITER = 1000000 # how many times network updated
+TOTAL_STEP = 1000  # total steps
+TOTAL_TRAIN_ITER = 1000000  # how many times network updated
+
 
 def make_deterministic(seed):
 
@@ -23,18 +26,23 @@ def make_deterministic(seed):
     if cuda_version is not None and float(torch.version.cuda) >= 10.2:
         os.environ['CUBLAS_WORKSPACE_CONFIG'] = '4096:8'
     else:
-        torch.set_deterministic(True)  #Not all Operations support this.
-    torch.backends.cudnn.deterministic = True #This is only for Convolution no problem
+        torch.set_deterministic(True)  # Not all Operations support this.
+    # This is only for Convolution no problem
+    torch.backends.cudnn.deterministic = True
+
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--alg", default="DQN", help="RL algorithm")
-    parser.add_argument("--network", default="SENSOR", help="Vision network")
+    parser.add_argument("--alg", default="DQN", help="RL algorithm",
+                        choices=["DQN", "PPO", "DDQN"])
+    parser.add_argument("--network", default="SENSOR", help="Vision network",
+                        choices=["RGB", "DEPTH", "SENSOR", "VGG-16"])
     args = parser.parse_args()
 
     global ALG, NETWORK
     ALG = args.alg
     NETWORK = args.network
+
 
 if __name__ == "__main__":
     main()
@@ -49,11 +57,13 @@ if __name__ == "__main__":
     ray.init(local_mode=True)
 
     num_actions = 6
-    step_length=10
-    image_width=256
-    image_height=256
+    step_length = 10
+    image_width = 256
+    image_height = 256
 
-    config = getConfig(ALG, NETWORK, num_actions, step_length, image_width, image_height)
+    config = getConfig(ALG, NETWORK, num_actions,
+                       step_length, image_width, image_height)
+
     config["lr"] = 1e-4
     config["timesteps_per_iteration"] = 32
     config["learning_starts"] = 32
@@ -62,8 +72,8 @@ if __name__ == "__main__":
     config["exploration_config"]["epsilon_timesteps"] = 5000
     config["env"] = "drone_env"
     config["num_gpus"] = 1 if torch.cuda.is_available() else 0
-    
-    # Determinism 
+
+    # Determinism
     config['seed'] = SEED_VALUE
     make_deterministic(SEED_VALUE)
 
@@ -77,21 +87,22 @@ if __name__ == "__main__":
     # Load state from checkpoint.
     # if(train_config['checkpoint']):
     #     agent.restore(train_config['checkpoint_path'])
-    # if required latedr                        
-    # tune run -> trial_dirname_creator=trial_name_id, trial_name_creator=trial_name_id,
+    # if required latedr
+    # tune run -> trial_dirname_creator=trial_name_id
 
-     # Setup the stopping condition
+    # Setup the stopping condition
 
     checkpoint_path = os.path.join(os.getcwd(), "checkpoints")
     config_str = intro_repository(config)
     print(config_str)
     results = tune.run(ALG, config=config,
-                            checkpoint_freq=5, 
-                            max_failures = 5,
-                            log_to_file=["logs_out.txt", "logs_err.txt"],
-                            checkpoint_at_end = True,
-                            progress_reporter=CLIReporter(metric_columns=["loss","date", "training_iteration", "timesteps_total"]),
-                            local_dir=checkpoint_path,
-                            keep_checkpoints_num=10,
-                            stop=stopx)
+                       checkpoint_freq=5,
+                       max_failures=5,
+                       log_to_file=["logs_out.txt", "logs_err.txt"],
+                       checkpoint_at_end=True,
+                       progress_reporter=CLIReporter(
+                           metric_columns=["loss", "date", "training_iteration", "timesteps_total"]),
+                       local_dir=checkpoint_path,
+                       keep_checkpoints_num=10,
+                       stop=stopx)
     ray.shutdown()
