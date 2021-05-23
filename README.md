@@ -17,3 +17,18 @@
 Flying Cavalry Project - Ucan Kavalye Projesi 
 All copyright by Reinforcement Learning Turkiye 2021.
 
+## LINUX INSTALL
+
+If you ever installed packages before remove them
+
+pip uninstall ray msgpack msgpack-rpc-python msgpack
+
+Then installation is simple(if you didnt install before too)
+
+git clone --depth 1 --branch main-novideo-basictest https://github.com/rlturkiye/flying-cavalry.git
+
+pip install  /content/flying-cavalry/packages/msgpack-rpc-python_linux/
+
+pip install  /content/flying-cavalry/packages/airsim/
+
+pip install -r  /content/flying-cavalry/requirements.txt
