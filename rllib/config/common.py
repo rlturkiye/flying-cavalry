@@ -8,7 +8,7 @@ COMMON_CONFIG: TrainerConfigDict = {
     # === Settings for Rollout Worker processes ===
     # Number of rollout worker actors to create for parallel sampling. Setting
     # this to 0 will force rollouts to be done in the trainer actor.
-    "num_workers": 2,
+    "num_workers": 0,
     # Number of environments to evaluate vectorwise per worker. This enables
     # model inference batching, which can improve performance for inference
     # bottlenecked workloads.
