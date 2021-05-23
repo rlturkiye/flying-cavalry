@@ -76,5 +76,6 @@ PPO_CONFIG = with_common_config({
     "observation_filter": "NoFilter",
 })
 
+
 def PPOconf():
     return PPO_CONFIG

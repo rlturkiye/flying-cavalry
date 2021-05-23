@@ -140,5 +140,6 @@ DDPG_CONFIG = with_common_config({
     "min_iter_time_s": 1,
 })
 
+
 def DDPGconf():
     return DDPG_CONFIG

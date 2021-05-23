@@ -7,8 +7,8 @@ import datetime
 from CameraRL.record import Record
 from PIL import Image
 
-class RGB(Camera):
 
+class RGB(Camera):
 
     def __init__(self, client, camera_name="0", size=(84, 84)):
 
@@ -16,16 +16,16 @@ class RGB(Camera):
         self.client = client
         self.camera_name = camera_name
 
-
     def fetch_single_img(self):
         """
         Returns the numpy array.
         camera_name: specifies the location of the camera in the drone. If you define camera from settings.json, this is your camera name.
         """
-        #Image request from AirSim
-        response = self.client.simGetImages([airsim.ImageRequest(self.camera_name, airsim.ImageType.Scene, pixels_as_float=False, compress=False)])[0]
+        # Image request from AirSim
+        response = self.client.simGetImages([airsim.ImageRequest(
+            self.camera_name, airsim.ImageType.Scene, pixels_as_float=False, compress=False)])[0]
         # get numpy array
-        img1d = np.fromstring(response.image_data_uint8, dtype=np.uint8) 
+        img1d = np.fromstring(response.image_data_uint8, dtype=np.uint8)
         # reshape array to 3 channel image array H X W X 3
         img_rgb = img1d.reshape(response.height, response.width, 3)
         img_rgb_resized = Image.fromarray(img_rgb).resize(self.size)
@@ -35,7 +35,6 @@ class RGB(Camera):
 
         return img_rgb
 
-    
     def save_single_img(self, file_name="RGB "+str(datetime.datetime.now()), path="./", format=".png"):
         """
         Saves the image to the specified location.
@@ -45,16 +44,17 @@ class RGB(Camera):
             path: specifies the location you want to save. It saves in the directory where it is located  by default.
             format: specifies the format of the picture (.jpg, .png etc.) takes ".png" by default
         """
-        Record.save_single_img(self, file_name=file_name, path=path, format=format)
-        #Save an image on path with your format
+        Record.save_single_img(self, file_name=file_name,
+                               path=path, format=format)
+        # Save an image on path with your format
         return
-    
+
     def camera_info(self):
         """
         Get details about the camera
         Args:
             camera_name specifies the location of the camera in the drone. If you define camera from settings.json, this is your camera name.
         """
-        info= self.client.simGetCameraInfo(self.camera_name)
+        info = self.client.simGetCameraInfo(self.camera_name)
 
         return print(info)

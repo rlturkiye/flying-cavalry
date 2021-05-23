@@ -80,7 +80,7 @@ if __name__ == "__main__":
     # Stopping criteria
 
     stopx = {"timesteps_total": TOTAL_STEP}
-            #"training_iteration":TOTAL_TRAIN_ITER }
+    # "training_iteration":TOTAL_TRAIN_ITER }
 
     # Load Checkpoints
 

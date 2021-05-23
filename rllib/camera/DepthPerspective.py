@@ -1,48 +1,39 @@
-from CameraRL.Camera import Camera
+from CameraRl.Camera import Camera
 import airsim
 import numpy as np
 import os
 import cv2
 import datetime
-from CameraRL.record import Record
-from PIL import Image
+from record import Record
 
-class DepthVision(Camera):
+
+class DepthPerspective(Camera):
     """
-     You get an image that helps depth visualization
-     Each pixel value is interpolated from black to white depending on depth in camera plane in meters. 
-     The pixels with pure white means depth of 100m or more while pure black means depth of 0 meters.
-     """
+    you get depth from camera using a projection ray that hits that pixel.
+    """
 
-    def __init__(self, client, camera_name="0", size=(84, 84)):
-
+    def __init__(self, client, camera_name):
         self.client = client
         self.camera_name = camera_name
-        self.size = size
-
 
     def fetch_single_img(self):
         """
         return  the numpy array
         cam type specifies the location of the camere in the drone.
         """
-        #Image request from AirSim
-        response = self.client.simGetImages([airsim.ImageRequest(self.camera_name, airsim.ImageType.DepthVis, pixels_as_float=True, compress=False)])[0]
+        # Image request from AirSim
+        response = self.client.simGetImages([airsim.ImageRequest(
+            self.camera_name, airsim.ImageType.DepthPerspective, pixels_as_float=True, compress=False)])[0]
 
-        #get numpy array
+        # get numpy array
         img1d = np.array(response.image_data_float, dtype=np.float32)
         # reshape array to 2 channel image array H X W x 1
         img_reshaped = img1d.reshape(response.height, response.width)
-        img_depth = np.array(img_reshaped * 255, dtype=np.float32)
-        img_depth_resized = Image.fromarray(img_depth).resize((self.size)).convert("L")
-        obs_size = np.array(self.size, dtype=np.int32)
-        obs_size = np.insert(obs_size, 0, 1)
-        img_depth = np.array(img_depth_resized).reshape(obs_size)
+        img_depth = np.array(img_reshaped, dtype=np.float32)
 
         return img_depth
 
-
-    def save_single_img(self, file_name= "DepthVision "+str(datetime.datetime.now()), path="./", format=".png"):
+    def save_single_img(self, file_name="DepthPerspective "+str(datetime.datetime.now()), path="./", format=".png"):
         """
         Saves the image to the specified location.
         Args:
@@ -51,12 +42,12 @@ class DepthVision(Camera):
             path: specifies the location you want to save. It saves in the directory where it is located  by default.
             format: specifies the format of the picture (.pfm, .png etc.) takes ".png" by default
         """
-        
-        #Save an image on path with your format
-        Record.save_single_img(self, file_name=file_name, path=path, format=format)
-        
-        return 
 
+        # Save an image on path with your format
+        Record.save_single_img(self,  file_name=file_name,
+                               path=path, format=format)
+
+        return
 
     def save_as_pfm(self, scale=100, file_name="DepthPerspective PFM "+str(datetime.datetime.now()), path="./"):
         """
@@ -67,17 +58,16 @@ class DepthVision(Camera):
             path: specifies the location you want to save. It saves in the directory where it is located  by default.
             scale: ??????????????????
         """
-        Record.save_as_pfm(self,scale=scale, file_name=file_name, path=path)
+        Record.save_as_pfm(self, scale=scale, file_name=file_name, path=path)
 
         return
 
-
-    def camera_info(self):
+    def camera_info(self,):
         """
         Get details about the camera
         Args:
             camera_name (str): Name of the camera, for backwards compatibility, ID numbers such as 0,1,etc. can also be used
         """
-        info=self.client.simGetCameraInfo(self.camera_name)
+        info = self.client.simGetCameraInfo(self.camera_name)
 
         return print(info)

@@ -108,5 +108,6 @@ DQN_CONFIG = with_common_config({
     "min_iter_time_s": 1,
 })
 
+
 def DQNconf():
     return DQN_CONFIG

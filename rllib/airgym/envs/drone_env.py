@@ -14,8 +14,10 @@ from CameraRL.DepthVision import DepthVision
 import random
 import math
 
-# ip_address, step_length, image_shape, useDepth 
+# ip_address, step_length, image_shape, useDepth
 # spaces.Discrete(7)
+
+
 class AirSimDroneEnv(gym.Env):
     def __init__(self, config):
 
@@ -31,19 +33,24 @@ class AirSimDroneEnv(gym.Env):
 
         if not self.onlySensor:
             if self.useDepth:
-                self.camera = DepthVision(client=self.drone, camera_name="0", size=self.image_size)
+                self.camera = DepthVision(
+                    client=self.drone, camera_name="0", size=self.image_size)
             else:
-                self.camera = RGB(client=self.drone, camera_name="0", size=self.image_size)        
-        
+                self.camera = RGB(client=self.drone,
+                                  camera_name="0", size=self.image_size)
+
         self.target = np.array([0, 0, -19])
         self.target_house = "SM_House_27"
-        self.last_distances = self.get_distance(self.drone.getMultirotorState().kinematics_estimated.position)
+        self.last_distances = self.get_distance(
+            self.drone.getMultirotorState().kinematics_estimated.position)
         self.quad_offset = (0, 0, 0)
         self.total_step = 0
         self.total_check = 5
         self.current_final = False
-        self.starting_positions = ([293, -349, -2], [-212, 7, -2], [23, -14, -2], [-216, -362, -2], [160, -66, -2])
-        self.houses = ["SM_House_27", "SM_House_85", "SM_House_22", "SM_House_287", "SM_House_4333"]
+        self.starting_positions = (
+            [293, -349, -2], [-212, 7, -2], [23, -14, -2], [-216, -362, -2], [160, -66, -2])
+        self.houses = ["SM_House_27", "SM_House_85",
+                       "SM_House_22", "SM_House_287", "SM_House_4333"]
         self._setup_flight()
 
     def __del__(self):
@@ -65,28 +72,33 @@ class AirSimDroneEnv(gym.Env):
         time.sleep(1)
         quad_state = self.drone.getMultirotorState().kinematics_estimated.position
         # move up otherwise the drone will stuck
-        self.drone.moveToPositionAsync(quad_state.x_val, quad_state.y_val, -7, 5).join()
+        self.drone.moveToPositionAsync(
+            quad_state.x_val, quad_state.y_val, -7, 5).join()
         # correct orientation
         self.correctOrientation()
         # set target house pos
-        pos = self.drone.simGetObjectPose(self.houses[0]).position 
+        pos = self.drone.simGetObjectPose(self.houses[0]).position
         pos = [pos.x_val, pos.y_val, pos.z_val]
         self.target_house_pos = np.array(pos)
         self.calculate_target_location()
-        self.last_distances = self.get_distance(self.drone.getMultirotorState().kinematics_estimated.position)
+        self.last_distances = self.get_distance(
+            self.drone.getMultirotorState().kinematics_estimated.position)
 
     def _get_obs(self):
         if not self.onlySensor:
             img = self.camera.fetch_single_img()
 
         linear_vel = self.drone.getMultirotorState().kinematics_estimated.linear_velocity
-        linear_acc = self.drone.getMultirotorState().kinematics_estimated.linear_acceleration
+        linear_acc = self.drone.getMultirotorState(
+        ).kinematics_estimated.linear_acceleration
         angular_vel = self.drone.getMultirotorState().kinematics_estimated.angular_velocity
-        angular_acc = self.drone.getMultirotorState().kinematics_estimated.angular_acceleration
-        
-        #orient = self.drone.getMultirotorState().kinematics_estimated.orientation TODO discrete yapılcak
+        angular_acc = self.drone.getMultirotorState(
+        ).kinematics_estimated.angular_acceleration
 
-        distanceToGeoFence = self.distanceToGeoFence(self.drone.getMultirotorState().kinematics_estimated.position)
+        # orient = self.drone.getMultirotorState().kinematics_estimated.orientation TODO discrete yapılcak
+
+        distanceToGeoFence = self.distanceToGeoFence(
+            self.drone.getMultirotorState().kinematics_estimated.position)
 
         if not self.onlySensor:
             obs = {
@@ -110,12 +122,11 @@ class AirSimDroneEnv(gym.Env):
 
         return obs
 
-
     def _compute_reward(self):
         """Compute reward"""
 
         reward = -1.5
-        #col=self.drone.simGetCollisionInfo()
+        # col=self.drone.simGetCollisionInfo()
         collision = self.drone.simGetCollisionInfo().has_collided
         quad_state = self.drone.getMultirotorState().kinematics_estimated.position
 
@@ -150,7 +161,8 @@ class AirSimDroneEnv(gym.Env):
         elif reward > 499:
             done = 1
             print("terminate: 2")
-        print("Reward:", reward, "Done:", done, "current_final:", self.current_final)
+        print("Reward:", reward, "Done:", done,
+              "current_final:", self.current_final)
         return reward, done
 
     def step(self, action):
@@ -159,7 +171,7 @@ class AirSimDroneEnv(gym.Env):
 
         if self.total_step % self.total_check == 0:
             self.correctOrientation()
-        
+
         quad_offset = self.interpret_action(action)
         vel = self.drone.getMultirotorState().kinematics_estimated.linear_velocity
         zpos = self.drone.getMultirotorState().kinematics_estimated.position.z_val
@@ -171,7 +183,7 @@ class AirSimDroneEnv(gym.Env):
         )
 
         #self.drone.moveToPositionAsync(self.target[0], self.target[1], -13, 10)
-        
+
         time.sleep(1)
 
         reward, done = self._compute_reward()
@@ -231,7 +243,8 @@ class AirSimDroneEnv(gym.Env):
 
     def get_distance(self, quad_state):
         """Get distance between current state and goal state"""
-        quad_pt = np.array(list((quad_state.x_val, quad_state.y_val, quad_state.z_val)))
+        quad_pt = np.array(
+            list((quad_state.x_val, quad_state.y_val, quad_state.z_val)))
         dist = np.linalg.norm(quad_pt - self.target)
         dx = self.target[0] - quad_pt[0]
         dy = self.target[1] - quad_pt[1]
@@ -243,7 +256,7 @@ class AirSimDroneEnv(gym.Env):
         self.geoFenceCoords = {}
         pos1 = self.drone.simGetObjectPose("SM_House_27").position
         self.geoFenceCoords["x1"] = pos1.x_val - 20
-        self.geoFenceCoords["y1"] = pos1.y_val + 20 
+        self.geoFenceCoords["y1"] = pos1.y_val + 20
         pos2 = self.drone.simGetObjectPose("SM_House_86").position
         self.geoFenceCoords["x2"] = pos2.x_val + 20
         self.geoFenceCoords["y2"] = pos2.y_val - 20
@@ -265,19 +278,21 @@ class AirSimDroneEnv(gym.Env):
         closest_dist = 99999
         closest_index = 0
         for i, corner in enumerate(geofence_corners):
-            dist = np.linalg.norm(np.array([quad_state.x_val, quad_state.y_val]) - np.array(corner))
+            dist = np.linalg.norm(
+                np.array([quad_state.x_val, quad_state.y_val]) - np.array(corner))
             if dist < closest_dist:
                 closest_dist = dist
                 closest_index = i
 
         dx = geofence_corners[closest_index][0] - quad_state.x_val
         dy = geofence_corners[closest_index][1] - quad_state.y_val
-                
+
         return [closest_dist, dx, dy]
 
     def calculate_angle(self):
         pos = self.drone.getMultirotorState().kinematics_estimated.position
-        target_degree = math.degrees(math.atan2((self.target[1] - pos.y_val) , (self.target[0] - pos.x_val)))
+        target_degree = math.degrees(math.atan2(
+            (self.target[1] - pos.y_val), (self.target[0] - pos.x_val)))
         return target_degree
 
     def calculate_target_location(self):
@@ -303,11 +318,11 @@ class AirSimDroneEnv(gym.Env):
             pass
         yawMode = YawMode(is_rate=False, yaw_or_rate=degree)
         self.drone.moveByVelocityZAsync(
-        vel.x_val,
-        vel.y_val,
-        zpos,
-        1,
-        yaw_mode=yawMode)
+            vel.x_val,
+            vel.y_val,
+            zpos,
+            1,
+            yaw_mode=yawMode)
         time.sleep(1)
 
     def close(self):

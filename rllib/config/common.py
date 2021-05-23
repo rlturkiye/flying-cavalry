@@ -189,7 +189,7 @@ COMMON_CONFIG: TrainerConfigDict = {
     # Experimental flag to speed up sampling and use "trajectory views" as
     # generic ModelV2 `input_dicts` that can be requested by the model to
     # contain different information on the ongoing episode.
-    #"_use_trajectory_view_api": True,
+    # "_use_trajectory_view_api": True,
     # The SampleCollector class to be used to collect and retrieve
     # environment-, model-, and sampler data. Override the SampleCollector base
     # class to implement your own collection/buffering/retrieval logic.
@@ -265,10 +265,10 @@ COMMON_CONFIG: TrainerConfigDict = {
     # when running in Tune. Otherwise, the trainer runs in the main program.
     "num_cpus_for_driver": 1,
     # Deprecated.
-    #"memory": 0,
-    #"object_store_memory": 0,
-    #"memory_per_worker": 0,
-    #"object_store_memory_per_worker": 0,
+    # "memory": 0,
+    # "object_store_memory": 0,
+    # "memory_per_worker": 0,
+    # "object_store_memory_per_worker": 0,
 
     # === Offline Datasets ===
     # Specify how to generate experiences:
@@ -347,6 +347,7 @@ COMMON_CONFIG: TrainerConfigDict = {
     # be set to greater than 1 to support recurrent models.
     "replay_sequence_length": 1,
 }
+
 
 def with_common_config(
         extra_config: PartialTrainerConfigDict) -> TrainerConfigDict:

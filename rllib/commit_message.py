@@ -1,7 +1,9 @@
 from git import Repo
 import os
 import json
-def intro_repository(config,mode="Train"):
+
+
+def intro_repository(config, mode="Train"):
 
  # Get git info to put in the config_*.txt file
     repo = Repo(os.getcwd())
