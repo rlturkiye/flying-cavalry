@@ -26,6 +26,7 @@ class AirSimDroneEnv(gym.Env):
             self.useDepth = config["use_depth"]
             self.image_size = config["image_size"]
         self.step_length = config["step_length"]
+        self.sim_speed = config["sim_speed"]
 
         self.drone = airsim.MultirotorClient()
 
@@ -62,7 +63,6 @@ class AirSimDroneEnv(gym.Env):
         pose.position.y_val = self.starting_pos[1]
         pose.position.z_val = self.starting_pos[2]
         self.drone.simSetVehiclePose(pose, True)
-        time.sleep(1)
         quad_state = self.drone.getMultirotorState().kinematics_estimated.position
         # move up otherwise the drone will stuck
         self.drone.moveToPositionAsync(quad_state.x_val, quad_state.y_val, -7, 5).join()
@@ -177,7 +177,7 @@ class AirSimDroneEnv(gym.Env):
 
         #self.drone.moveToPositionAsync(self.target[0], self.target[1], -13, 10)
         
-        time.sleep(1)
+        time.sleep(1/self.sim_speed)
 
         reward, done = self._compute_reward()
         obs = self._get_obs()
@@ -311,7 +311,7 @@ class AirSimDroneEnv(gym.Env):
         zpos,
         1,
         yaw_mode=yawMode)
-        time.sleep(1)
+        time.sleep(1/self.sim_speed)
 
     def close(self):
         print("close func called")

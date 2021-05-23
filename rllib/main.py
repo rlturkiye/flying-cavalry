@@ -59,8 +59,9 @@ if __name__ == "__main__":
     step_length=10
     image_width=256
     image_height=256
+    sim_speed = 5
 
-    config = getConfig(ALG, NETWORK, num_actions, step_length, image_width, image_height)
+    config = getConfig(ALG, NETWORK, num_actions, step_length, image_width, image_height, sim_speed)
     config["lr"] = 1e-4
     config["timesteps_per_iteration"] = 64
     config["learning_starts"] = 256

@@ -57,7 +57,7 @@ def sensorModel(num_actions):
     return modelConfig
 
 
-def registerEnv(num_actions, use_depth, step_length, image_width, image_height):
+def registerEnv(num_actions, use_depth, step_length, image_width, image_height, sim_speed):
     env_config = {
         "observation_space": spaces.Dict({
             "img": spaces.Box(0, 255, [1, image_width, image_height]) if use_depth else spaces.Box(0, 255, [3, image_width, image_height]),
@@ -72,12 +72,13 @@ def registerEnv(num_actions, use_depth, step_length, image_width, image_height):
         "use_depth": use_depth,
         "step_length": step_length,
         "image_size": [image_width, image_height],
-        "onlySensor": False
+        "onlySensor": False,
+        "sim_speed": sim_speed
     }
     register_env("drone_env", lambda config: AirSimDroneEnv(env_config))
 
 
-def registerSensorEnv(num_actions, step_length):
+def registerSensorEnv(num_actions, step_length, sim_speed):
     env_config = {
         "observation_space": spaces.Dict({
             "target_dist": spaces.Box(low=-1000, high=1000, shape=(4,), dtype=np.float64),
@@ -89,26 +90,27 @@ def registerSensorEnv(num_actions, step_length):
             }),
         "action_space": spaces.Discrete(num_actions),
         "step_length": step_length,
-        "onlySensor": True
+        "onlySensor": True,
+        "sim_speed": sim_speed
     }
     register_env("drone_env", lambda config: AirSimDroneEnv(env_config))
 
 
-def registerEnvGetModelConfig(network, num_actions = 9, step_length=10, image_width=84, image_height=84):
+def registerEnvGetModelConfig(network, num_actions = 9, step_length=10, image_width=84, image_height=84, sim_speed=1):
     if network == "VGG-16":
-        registerEnv(num_actions, use_depth=False, step_length=step_length, image_width=image_width, image_height=image_height)
+        registerEnv(num_actions, use_depth=False, step_length=step_length, image_width=image_width, image_height=image_height, sim_speed=sim_speed)
         ModelCatalog.register_custom_model('CustomNetwork', CustomNetwork)
         modelConfig = vgg16(num_actions, inChannel=3)
     elif network ==  "RGB":
-        registerEnv(num_actions, use_depth=False, step_length=step_length, image_width=image_width, image_height=image_height)
+        registerEnv(num_actions, use_depth=False, step_length=step_length, image_width=image_width, image_height=image_height, sim_speed=sim_speed)
         ModelCatalog.register_custom_model('CustomNetwork', CustomNetwork)
         modelConfig = jointModel(num_actions, inChannel=3)
     elif network == "DEPTH":
-        registerEnv(num_actions, use_depth=True, step_length=step_length, image_width=image_width, image_height=image_height)
+        registerEnv(num_actions, use_depth=True, step_length=step_length, image_width=image_width, image_height=image_height, sim_speed=sim_speed)
         ModelCatalog.register_custom_model('CustomNetwork', CustomNetwork)
         modelConfig = jointModel(num_actions, 1)
     elif network == "SENSOR":
-        registerSensorEnv(num_actions, step_length=step_length)
+        registerSensorEnv(num_actions, step_length=step_length, sim_speed=sim_speed)
         ModelCatalog.register_custom_model('SENSOR', SensorNetwork)
         modelConfig = sensorModel(num_actions)
     
