@@ -3,7 +3,7 @@ from ray import tune
 from ray.tune import CLIReporter
 
 from config.config_handler import getConfig
-from commit_message import intro_repository
+#from commit_message import intro_repository
 
 import argparse
 import torch
@@ -37,7 +37,7 @@ def main():
     ALG = args.alg
     NETWORK = args.network
 
-GOOGLE_COLLAB = True
+GOOGLE_COLLAB = False
 
 if __name__ == "__main__":
     # Start The Simulation - Mainly for google collab
