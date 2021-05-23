@@ -119,12 +119,14 @@ class AirSimDroneEnv(gym.Env):
         collision = self.drone.simGetCollisionInfo().has_collided
         quad_state = self.drone.getMultirotorState().kinematics_estimated.position
 
+        terminate_reason = "None"
+
         if collision:
             reward = -100
-            print("Collision")
+            terminate_reason = "Collision"
         elif not self.inGeoFence(quad_state):
             reward = -100
-            print("Not in geofence")
+            terminate_reason = "Not in geofence"
         else:
             dist, dx, dy, dz = self.get_distance(quad_state)
             diff = self.last_distances[0] - dist
@@ -143,14 +145,17 @@ class AirSimDroneEnv(gym.Env):
             else:
                 reward += diff
 
+
         done = 0
         if reward <= -50:
-            print("terminate: 1")
+            terminate_reason = "Reward <= -50"
             done = 1
         elif reward > 499:
+            terminate_reason = "Done successfully"
             done = 1
-            print("terminate: 2")
-        print("Reward:", reward, "Done:", done, "current_final:", self.current_final)
+        
+        if done == 1:
+            print("Terminate :", terminate_reason, "| current_final:", self.current_final, "| Steps in episode:", self.total_step)
         return reward, done
 
     def step(self, action):
