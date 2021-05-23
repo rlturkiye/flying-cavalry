@@ -45,19 +45,31 @@ class AirSimDroneEnv(gym.Env):
         self.current_final = False
         self.starting_positions = [[293, -349, -2]] #, [-212, 7, -2], [23, -14, -2], [-216, -362, -2], [160, -66, -2])
         self.houses = ["SM_House_27", "SM_House_85", "SM_House_22", "SM_House_287", "SM_House_4333"]
-        self.last_collision_id = self.drone.simGetCollisionInfo().object_id
         self._setup_flight()
 
     def __del__(self):
         self.drone.reset()
 
     def _setup_flight(self):
+        self.current_final = False
+        self.starting_pos = self.starting_positions[random.randint(0, len(self.starting_positions)-1)]
+        self.calculate_target_location()
+        # set target house pos
+        pos = self.drone.simGetObjectPose(self.houses[0]).position 
+        pos = [pos.x_val, pos.y_val, pos.z_val]
+        self.target_house_pos = np.array(pos)
+
+        can_reset = False
+        while not can_reset:
+            can_reset = self.isResetPositionAvaible()
+            if not can_reset:
+                print("Waiting for the truck move away from starting point.")
+                time.sleep(5/self.sim_speed)
+
         self.drone.reset()
         self.drone.enableApiControl(True)
         self.drone.armDisarm(True)
         self.setGeoFenceCoords()
-        self.current_final = False
-        self.starting_pos = self.starting_positions[random.randint(0, len(self.starting_positions)-1)]
         # teleport the drone
         pose = self.drone.simGetVehiclePose()
         pose.position.x_val = self.starting_pos[0]
@@ -70,11 +82,6 @@ class AirSimDroneEnv(gym.Env):
         self.drone.moveToPositionAsync(quad_state.x_val, quad_state.y_val, -7, 5).join()
         # correct orientation
         self.correctOrientation()
-        # set target house pos
-        pos = self.drone.simGetObjectPose(self.houses[0]).position 
-        pos = [pos.x_val, pos.y_val, pos.z_val]
-        self.target_house_pos = np.array(pos)
-        self.calculate_target_location()
         self.last_distances = self.get_distance(self.drone.getMultirotorState().kinematics_estimated.position)
 
     def _get_obs(self):
@@ -290,15 +297,6 @@ class AirSimDroneEnv(gym.Env):
             pos = self.drone.simGetObjectPose("KargoArabasi").position
             self.target = [pos.x_val, pos.y_val, pos.z_val]
 
-    """def transform_angle(self, yaw):
-        phi = np.linspace(-1, 1, 360)
-        degree = 360
-        for i, value in enumerate(phi):
-            if value >= yaw:
-                degree = i
-                break
-        return degree"""
-
     def correctOrientation(self):
         yawMode = YawMode(is_rate=False, yaw_or_rate=0)
         vel = self.drone.getMultirotorState().kinematics_estimated.linear_velocity
@@ -314,6 +312,15 @@ class AirSimDroneEnv(gym.Env):
         1,
         yaw_mode=yawMode)
         time.sleep(1/self.sim_speed)
+
+
+    def isResetPositionAvaible(self):
+        pos = self.drone.simGetObjectPose("KargoArabasi").position
+        dist = np.linalg.norm(np.array(self.starting_pos) - np.array([pos.x_val, pos.y_val, pos.z_val]))
+        if dist > 20:
+            return True
+        else:
+            return False
 
     def close(self):
         print("close func called")
