@@ -183,13 +183,11 @@ class AirSimDroneEnv(gym.Env):
         obs = self._get_obs()
 
         self.total_step += 1
-        if reward > 499:
-            print("bitti")
 
         return obs, reward, done, {}
 
     def reset(self):
-        print(self.total_step)
+        #print(self.total_step)
         self.total_step = 0
         self._setup_flight()
         return self._get_obs()
