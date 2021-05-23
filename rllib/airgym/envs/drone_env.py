@@ -45,6 +45,7 @@ class AirSimDroneEnv(gym.Env):
         self.current_final = False
         self.starting_positions = [[293, -349, -2]] #, [-212, 7, -2], [23, -14, -2], [-216, -362, -2], [160, -66, -2])
         self.houses = ["SM_House_27", "SM_House_85", "SM_House_22", "SM_House_287", "SM_House_4333"]
+        self.last_collision_id = self.drone.simGetCollisionInfo().object_id
         self._setup_flight()
 
     def __del__(self):
@@ -62,6 +63,7 @@ class AirSimDroneEnv(gym.Env):
         pose.position.x_val = self.starting_pos[0]
         pose.position.y_val = self.starting_pos[1]
         pose.position.z_val = self.starting_pos[2]
+        self.last_collision_id = self.drone.simGetCollisionInfo().object_id
         self.drone.simSetVehiclePose(pose, True)
         quad_state = self.drone.getMultirotorState().kinematics_estimated.position
         # move up otherwise the drone will stuck
@@ -116,7 +118,7 @@ class AirSimDroneEnv(gym.Env):
 
         reward = -1.5
         #col=self.drone.simGetCollisionInfo()
-        collision = self.drone.simGetCollisionInfo().has_collided
+        collision = self.last_collision_id != self.drone.simGetCollisionInfo().object_id
         quad_state = self.drone.getMultirotorState().kinematics_estimated.position
 
         terminate_reason = "None"
