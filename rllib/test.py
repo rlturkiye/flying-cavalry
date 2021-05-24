@@ -6,7 +6,7 @@ from ray.rllib.agents.trainer_template import build_trainer
 from ray.rllib.agents.dqn import DQNTorchPolicy, DQNTrainer
 
 from config.config_handler import getConfig
-from commit_message import intro_repository
+#from commit_message import intro_repository
 
 import argparse
 import torch
@@ -14,6 +14,14 @@ import os
 import numpy as np
 import subprocess
 import gym
+from airgym.envs.drone_env import AirSimDroneEnv
+import numpy as np
+from ray.rllib.utils.typing import ModelConfigDict
+from ray.rllib.models import ModelCatalog
+from CustomModels.customNetwork import CustomNetwork
+from CustomModels.sensorNetwork import SensorNetwork
+from gym import spaces
+
 
 SEED_VALUE = 5
 TOTAL_STEP = 7000000 # total steps 
@@ -63,9 +71,8 @@ if __name__ == "__main__":
     step_length=10
     image_width=256
     image_height=256
-
-    config = getConfig(ALG, NETWORK, num_actions, step_length, image_width, image_height)
-    config["lr"] = 1e-4
+    sim_speed = 5
+    config = getConfig(ALG, NETWORK, num_actions, step_length, image_width, image_height,sim_speed)
     config["timesteps_per_iteration"] = 1000
     config["learning_starts"] = 512
     config["train_batch_size"] = 512
@@ -98,6 +105,7 @@ if __name__ == "__main__":
      # Setup the stopping condition
 
     checkpoint_path = os.path.join(os.getcwd(), "checkpoints/DQN/")
+    checkpoint_test = os.path.join(os.getcwd(), "checkpoint-test/checkpoint-285")
     if GOOGLE_COLLAB:
         checkpoint_path = os.path.join("/content/drive/MyDrive/","checkpoints")
     #config_str = intro_repository(config)
@@ -105,8 +113,25 @@ if __name__ == "__main__":
   
 
     agent = DQNTrainer(config=config, env=config["env"])
-    agent.restore(checkpoint_path)
-    env = gym.make(config["env"])
+    agent.restore(checkpoint_test)
+    env_config = {
+        "observation_space": spaces.Dict({
+            "img": spaces.Box(0, 255, [3, image_width, image_height]),
+            "target_dist": spaces.Box(low=-2048, high=2048, shape=(4,), dtype=np.float64),
+            "linear_vel": spaces.Box(low=-32, high=32, shape=(3,), dtype=np.float64),
+            "linear_acc": spaces.Box(low=-128, high=128, shape=(3,), dtype=np.float64),
+            "angular_vel": spaces.Box(low=-32, high=32, shape=(3,), dtype=np.float64),
+            "angular_acc": spaces.Box(low=-128, high=128, shape=(3,), dtype=np.float64),
+            "distToGeoFence": spaces.Box(low=-2048, high=2048, shape=(3,), dtype=np.float64),
+            }),
+        "action_space": spaces.Discrete(num_actions),
+        "use_depth": False,
+        "step_length": step_length,
+        "image_size": [image_width, image_height],
+        "onlySensor": False,
+        "sim_speed": sim_speed
+    }
+    env = AirSimDroneEnv(env_config)
 
     # run until episode ends
     episode_reward = 0
