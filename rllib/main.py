@@ -31,11 +31,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--alg", default="DQN", help="RL algorithm")
     parser.add_argument("--network", default="RGB", help="Vision network")
+    parser.add_argument("--restore_path",default="")
     args = parser.parse_args()
 
-    global ALG, NETWORK
+    global ALG, NETWORK,REST_PATH
     ALG = args.alg
     NETWORK = args.network
+    REST_PATH = args.restore_path
 
 GOOGLE_COLLAB = False
 
@@ -91,6 +93,7 @@ if __name__ == "__main__":
      # Setup the stopping condition
 
     checkpoint_path = os.path.join(os.getcwd(), "checkpoints")
+
     if GOOGLE_COLLAB:
         checkpoint_path = os.path.join("/content/drive/MyDrive/","checkpoints")
     #config_str = intro_repository(config)
@@ -103,5 +106,6 @@ if __name__ == "__main__":
                             progress_reporter=CLIReporter(metric_columns=["loss","date", "training_iteration", "timesteps_total"]),
                             local_dir=checkpoint_path,
                             keep_checkpoints_num=10,
-                            stop=stopx)
+                            stop=stopx,
+                            restore=REST_PATH)
     ray.shutdown()
