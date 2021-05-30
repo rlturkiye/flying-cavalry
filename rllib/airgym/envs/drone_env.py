@@ -43,7 +43,7 @@ class AirSimDroneEnv(gym.Env):
         self.total_step = 0
         self.total_check = 5
         self.current_final = False
-        self.starting_positions = [[293, -349, -2]] #, [-212, 7, -2], [23, -14, -2], [-216, -362, -2], [160, -66, -2])
+        self.starting_positions = [[293, -349, -2], [-212, 7, -2]] #, [-212, 7, -2], [23, -14, -2], [-216, -362, -2], [160, -66, -2])
         self.houses = ["SM_House_27", "SM_House_85", "SM_House_22", "SM_House_287", "SM_House_4333"]
         self._setup_flight()
 
@@ -52,19 +52,19 @@ class AirSimDroneEnv(gym.Env):
 
     def _setup_flight(self):
         self.current_final = False
-        self.starting_pos = self.starting_positions[random.randint(0, len(self.starting_positions)-1)]
         self.calculate_target_location()
         # set target house pos
-        pos = self.drone.simGetObjectPose(self.houses[0]).position 
+        pos = self.drone.simGetObjectPose(self.houses[random.randint(0, len(self.houses)-1)]).position 
         pos = [pos.x_val, pos.y_val, pos.z_val]
         self.target_house_pos = np.array(pos)
+        self.starting_pos = self.starting_positions[random.randint(0, len(self.starting_positions)-1)]
 
-        can_reset = False
-        while not can_reset:
-            can_reset = self.isResetPositionAvaible()
-            if not can_reset:
-                print("Waiting for the truck move away from starting point.")
-                time.sleep(5/self.sim_speed)
+        can_start = False
+        while not can_start:
+            can_start = self.isResetPositionAvaible()
+            if not can_start:
+                print("Start position changed")
+                self.starting_pos = self.starting_positions[random.randint(0, len(self.starting_positions)-1)]
 
         self.drone.reset()
         self.drone.enableApiControl(True)
