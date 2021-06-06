@@ -14,6 +14,19 @@ from CameraRL.DepthVision import DepthVision
 import random
 import math
 
+import gc
+import psutil
+def auto_garbage_collect(pct=80.0):
+    """
+    auto_garbage_collection - Call the garbage collection if memory used is greater than 80% of total available memory.
+                              This is called to deal with an issue in Ray not freeing up used memory.
+
+        pct - Default value of 80%.  Amount of memory in use that triggers the garbage collection call.
+    """
+    if psutil.virtual_memory().percent >= pct:
+        gc.collect()
+    return
+
 # ip_address, step_length, image_shape, useDepth 
 # spaces.Discrete(7)
 class AirSimDroneEnv(gym.Env):
@@ -43,7 +56,7 @@ class AirSimDroneEnv(gym.Env):
         self.total_step = 0
         self.total_check = 5
         self.current_final = False
-        self.starting_positions = [[293, -349, -2]]#, [-212, 7, -2]] #, [-212, 7, -2], [23, -14, -2], [-216, -362, -2], [160, -66, -2])
+        self.starting_positions = [[0, 0, -10]]#, [-212, 7, -10]] #, [-212, 7, -10], [23, -14, -10], [-216, -362, -10], [160, -66, -10])
         self.houses = ["SM_House_27", "SM_House_85", "SM_House_22", "SM_House_287", "SM_House_4333"]
         self._setup_flight()
 
@@ -65,11 +78,12 @@ class AirSimDroneEnv(gym.Env):
             if not can_start:
                 print("Start position changed")
                 self.starting_pos = self.starting_positions[random.randint(0, len(self.starting_positions)-1)]
+                time.sleep(1 / self.sim_speed)
 
         self.drone.reset()
         self.drone.enableApiControl(True)
         self.drone.armDisarm(True)
-        self.setGeoFenceCoords()
+        self.setGeoFenceCoords(map="Small")
         # teleport the drone
         pose = self.drone.simGetVehiclePose()
         pose.position.x_val = self.starting_pos[0]
@@ -82,6 +96,7 @@ class AirSimDroneEnv(gym.Env):
         self.drone.moveToPositionAsync(quad_state.x_val, quad_state.y_val, -7, 5).join()
         # correct orientation
         self.correctOrientation()
+        self.last_position = quad_state
         self.last_distances = self.get_distance(self.drone.getMultirotorState().kinematics_estimated.position)
 
     def _get_obs(self):
@@ -128,9 +143,12 @@ class AirSimDroneEnv(gym.Env):
         collision = self.last_collision_id != self.drone.simGetCollisionInfo().object_id
         quad_state = self.drone.getMultirotorState().kinematics_estimated.position
 
+
         terminate_reason = "None"
 
-        if collision:
+        if self.last_position == quad_state:
+            done = 1
+        elif collision:
             reward = -100
             terminate_reason = "Collision"
         elif not self.inGeoFence(quad_state):
@@ -154,6 +172,7 @@ class AirSimDroneEnv(gym.Env):
             else:
                 reward += diff
 
+        self.last_position = quad_state
 
         done = 0
         if reward <= -50:
@@ -169,6 +188,7 @@ class AirSimDroneEnv(gym.Env):
 
     def step(self, action):
         """Step"""
+        auto_garbage_collect()
         self.calculate_target_location()
 
         if self.total_step % self.total_check == 0:
@@ -250,15 +270,23 @@ class AirSimDroneEnv(gym.Env):
         dz = self.target[2] - quad_pt[2]
         return [dist, dx, dy, dz]
 
-    def setGeoFenceCoords(self):
+    def setGeoFenceCoords(self, map="Default"):
         # x1, y1, x2, y2
         self.geoFenceCoords = {}
-        pos1 = self.drone.simGetObjectPose("SM_House_27").position
-        self.geoFenceCoords["x1"] = pos1.x_val - 20
-        self.geoFenceCoords["y1"] = pos1.y_val + 20 
-        pos2 = self.drone.simGetObjectPose("SM_House_86").position
-        self.geoFenceCoords["x2"] = pos2.x_val + 20
-        self.geoFenceCoords["y2"] = pos2.y_val - 20
+        if map == "Default":
+            pos1 = self.drone.simGetObjectPose("SM_House_27").position
+            self.geoFenceCoords["x1"] = pos1.x_val - 20
+            self.geoFenceCoords["y1"] = pos1.y_val + 20 
+            pos2 = self.drone.simGetObjectPose("SM_House_86").position
+            self.geoFenceCoords["x2"] = pos2.x_val + 20
+            self.geoFenceCoords["y2"] = pos2.y_val - 20
+        elif map == "Small":
+            self.geoFenceCoords["x1"] = -70
+            self.geoFenceCoords["y1"] = 80
+            self.geoFenceCoords["x2"] = 80
+            self.geoFenceCoords["y2"] = -70
+        else:
+            assert NotImplementedError
 
     def inGeoFence(self, quad_state):
         if self.geoFenceCoords["x1"] < quad_state.x_val < self.geoFenceCoords["x2"]:

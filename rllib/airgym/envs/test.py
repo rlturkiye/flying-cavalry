@@ -5,12 +5,20 @@ import random
 from time import sleep
 import math
 
-drone = airsim.CarClient()
-
-#print(drone.getCarState().kinematics_estimated.position)
+drone = airsim.MultirotorClient()
+drone.reset()
+drone.enableApiControl(True)
+drone.armDisarm(True)
+pos = drone.getMultirotorState().kinematics_estimated.position
+pose = drone.simGetVehiclePose()
+pose.position.x_val = 80
+pose.position.y_val = -70
+pose.position.z_val = -12
+drone.simSetVehiclePose(pose, True)
+print(drone.getMultirotorState().kinematics_estimated.position)
 #print(drone.simGetObjectPose("KargoArabasi").position)
 #print(random.randint(0, 4))
-def transform_angle(yaw):
+"""def transform_angle(yaw):
     phi = np.linspace(-1, 1, 360)
     for i, value in enumerate(phi):
         if value >= yaw:
@@ -24,7 +32,7 @@ geofence_corners = ((geoFenceCoords[0], geoFenceCoords[1]),
                     (geoFenceCoords[2], geoFenceCoords[3]),
                     (geoFenceCoords[2], geoFenceCoords[1]))
 dx = geofence_corners[0][0] - 1
-dy = geofence_corners[0][1] - 1
+dy = geofence_corners[0][1] - 1"""
 
 """drone.reset()
 drone.enableApiControl(True)

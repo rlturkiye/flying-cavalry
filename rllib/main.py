@@ -55,7 +55,7 @@ if __name__ == "__main__":
     else:
         print("## CUDA not available")
 
-    ray.init(local_mode=True)
+    ray.init(object_store_memory = 2 * 1024 * 1024 * 1024)
 
     num_actions = 6
     step_length=10
