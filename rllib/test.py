@@ -113,7 +113,7 @@ if __name__ == "__main__":
   
 
     agent = DQNTrainer(config=config, env=config["env"])
-    agent.restore(checkpoint_test)
+    agent.restore("C:\\Users\\kara\\OneDrive\\Masaüstü\\cp\\checkpoint_004000\\checkpoint-4000")
     env_config = {
         "observation_space": spaces.Dict({
             "img": spaces.Box(0, 255, [3, image_width, image_height]),
@@ -133,13 +133,16 @@ if __name__ == "__main__":
     }
     env = AirSimDroneEnv(env_config)
 
-    # run until episode ends
-    episode_reward = 0
-    done = False
-    obs = env.reset()
-    while not done:
-        action = agent.compute_action(obs)
-        obs, reward, done, info = env.step(action)
-        episode_reward += reward
+    for i in range(50):
+        # run until episode ends
+        episode_reward = 0
+        done = False
+        obs = env.reset()
+        while not done:
+            pitch, roll, yaw  = env.drone.getMultirotorState().kinematics_estimated.orientation
+            print(yaw)
+            action = agent.compute_action(obs)
+            obs, reward, done, info = env.step(action)
+            episode_reward += reward
     ray.shutdown()
 

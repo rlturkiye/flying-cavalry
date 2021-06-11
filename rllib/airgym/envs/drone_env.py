@@ -40,6 +40,8 @@ class AirSimDroneEnv(gym.Env):
             self.image_size = config["image_size"]
         self.step_length = config["step_length"]
         self.sim_speed = config["sim_speed"]
+        self.reward_multiplier = 2
+        self.speed = 2.5
 
         self.drone = airsim.MultirotorClient()
 
@@ -139,6 +141,7 @@ class AirSimDroneEnv(gym.Env):
         """Compute reward"""
 
         reward = -1.5
+        done = 0
         #col=self.drone.simGetCollisionInfo()
         collision = self.last_collision_id != self.drone.simGetCollisionInfo().object_id
         quad_state = self.drone.getMultirotorState().kinematics_estimated.position
@@ -148,11 +151,14 @@ class AirSimDroneEnv(gym.Env):
 
         if self.last_position == quad_state:
             done = 1
+            terminate_reason = "Stuck"
         elif collision:
             reward = -100
+            done = 1
             terminate_reason = "Collision"
         elif not self.inGeoFence(quad_state):
             reward = -100
+            done = 1
             terminate_reason = "Not in geofence"
         else:
             dist, dx, dy, dz = self.get_distance(quad_state)
@@ -162,28 +168,25 @@ class AirSimDroneEnv(gym.Env):
             if dist < 20:
                 if self.current_final:
                     reward = 500
+                    done = 1
+                    terminate_reason = "Done"
                 else:
                     reward = 500 #499 du 500 yaptik denemek amacli.
+                    done = 1
+                    terminate_reason = "Done"
                     self.current_final = True
                     self.target = self.target_house_pos
                     self.last_distances = self.get_distance(quad_state)
             elif diff > 0:
-                reward += diff
+                reward += diff * self.reward_multiplier
             else:
-                reward += diff
+                reward += diff * self.reward_multiplier
 
         self.last_position = quad_state
-
-        done = 0
-        if reward <= -50:
-            terminate_reason = "Reward <= -50"
-            done = 1
-        elif reward > 499:
-            terminate_reason = "Done successfully"
-            done = 1
         
         if done == 1:
             print("Terminate :", terminate_reason, "| current_final:", self.current_final, "| Steps in episode:", self.total_step)
+        
         return reward, done
 
     def step(self, action):
@@ -191,21 +194,18 @@ class AirSimDroneEnv(gym.Env):
         auto_garbage_collect()
         self.calculate_target_location()
 
-        if self.total_step % self.total_check == 0:
-            self.correctOrientation()
-        
-        quad_offset = self.interpret_action(action)
-        vel = self.drone.getMultirotorState().kinematics_estimated.linear_velocity
+        self.correctOrientation()
         zpos = self.drone.getMultirotorState().kinematics_estimated.position.z_val
+        quad_offset, yawMode = self.interpret_action(action)
         self.drone.moveByVelocityZAsync(
-            vel.x_val + quad_offset[0],
-            vel.y_val + quad_offset[1],
+            quad_offset[0],
+            quad_offset[1],
             zpos + quad_offset[2],
-            1
+            10,
+            drivetrain=airsim.DrivetrainType.ForwardOnly,
+            yaw_mode=yawMode
         )
 
-        #self.drone.moveToPositionAsync(self.target[0], self.target[1], -13, 10)
-        
         time.sleep(1/self.sim_speed)
 
         reward, done = self._compute_reward()
@@ -216,50 +216,49 @@ class AirSimDroneEnv(gym.Env):
         return obs, reward, done, {}
 
     def reset(self):
-        #print(self.total_step)
         self.total_step = 0
         self._setup_flight()
         return self._get_obs()
 
     def interpret_action(self, action):
-        # joinle kullanılmaz
-        if action == 0:
-            quad_offset = (self.step_length, 0, 0)
-        elif action == 1:
-            quad_offset = (0, self.step_length, 0)
-        elif action == 2:
-            quad_offset = (-self.step_length, 0, 0)
-        elif action == 3:
-            quad_offset = (0, -self.step_length, 0)
-        elif action == 4:
-            quad_offset = (0, 0, 1)
-        elif action == 5:
-            quad_offset = (0, 0, -1)
+        _, _, yaw  = airsim.to_eularian_angles(self.drone.simGetVehiclePose().orientation)
+        if action == 0: # forward
+            vx = math.cos(yaw)
+            vy = math.sin(yaw)
+            z = 0
+            yaw_rate = 0
+        elif action == 1: # right
+            vx = math.cos(yaw + math.pi/2)
+            vy = math.sin(yaw + math.pi/2)
+            z = 0
+            yaw_rate=270
+        elif action == 2: # backward
+            vx = math.cos(yaw - math.pi)
+            vy = math.sin(yaw - math.pi)
+            z = 0
+            yaw_rate=180
+        elif action == 3: # left
+            vx = math.cos(yaw - math.pi/2)
+            vy = math.sin(yaw - math.pi/2)
+            z = 0
+            yaw_rate=90
+        elif action == 4: # down
+            vx = 0
+            vy = 0
+            z = 1
+            yaw_rate = 0
+        elif action == 5: # up
+            vx = 0
+            vy = 0
+            z = -1
+            yaw_rate = 0
         else:
-            quad_offset = (0, 0, 0)
+            vx = 0
+            vy = 0
+            z = 0
+            yaw_rate = 0
 
-        """if action == 0:
-            quad_offset = (self.step_length, 0, 0)
-        elif action == 1:
-            quad_offset = (0, self.step_length, 0)
-        elif action == 2:
-            quad_offset = (-self.step_length, 0, 0)
-        elif action == 3:
-            quad_offset = (self.step_length, -self.step_length, 0)
-        if action == 4:
-            quad_offset = (self.step_length, self.step_length, 0)
-        elif action == 5:
-            quad_offset = (-self.step_length, self.step_length, 0)
-        elif action == 6:
-            quad_offset = (-self.step_length, -self.step_length, 0)
-        elif action == 7:
-            quad_offset = (0, 0, 1)
-        elif action == 8:
-            quad_offset = (0, 0, -1)
-        else:
-            quad_offset = (0, 0, 0)"""
-
-        return quad_offset
+        return (vx*self.speed, vy*self.speed, z), YawMode(is_rate=False, yaw_or_rate=yaw_rate)
 
     def get_distance(self, quad_state):
         """Get distance between current state and goal state"""
@@ -326,21 +325,17 @@ class AirSimDroneEnv(gym.Env):
             self.target = [pos.x_val, pos.y_val, pos.z_val]
 
     def correctOrientation(self):
-        yawMode = YawMode(is_rate=False, yaw_or_rate=0)
         vel = self.drone.getMultirotorState().kinematics_estimated.linear_velocity
         zpos = self.drone.getMultirotorState().kinematics_estimated.position.z_val
         degree = self.calculate_angle()
-        if degree < 10:
-            pass
         yawMode = YawMode(is_rate=False, yaw_or_rate=degree)
         self.drone.moveByVelocityZAsync(
-        vel.x_val,
-        vel.y_val,
-        zpos,
-        1,
-        yaw_mode=yawMode)
-        time.sleep(1/self.sim_speed)
-
+            vel.x_val,
+            vel.y_val,
+            zpos,
+            3,
+            yaw_mode=yawMode)
+        time.sleep(1 / self.sim_speed)
 
     def isResetPositionAvaible(self):
         pos = self.drone.simGetObjectPose("KargoArabasi").position
