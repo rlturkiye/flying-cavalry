@@ -40,6 +40,7 @@ class AirSimDroneEnv(gym.Env):
             self.image_size = config["image_size"]
         self.step_length = config["step_length"]
         self.sim_speed = config["sim_speed"]
+        self.map = config["map"]
         self.reward_multiplier = 2
         self.speed = 2.5
 
@@ -53,12 +54,13 @@ class AirSimDroneEnv(gym.Env):
         
         self.target = np.array([0, 0, -19])
         self.target_house = "SM_House_27"
+        self.target_house_pos = np.array([0, 0, 0])
         self.last_distances = self.get_distance(self.drone.getMultirotorState().kinematics_estimated.position)
         self.quad_offset = (0, 0, 0)
         self.total_step = 0
         self.total_check = 5
         self.current_final = False
-        self.starting_positions = [[0, 0, -10]]#, [-212, 7, -10]] #, [-212, 7, -10], [23, -14, -10], [-216, -362, -10], [160, -66, -10])
+        self.starting_positions = [[0, 0, -10], [-212, 7, -10], [-212, 7, -10], [23, -14, -10], [-216, -362, -10], [160, -66, -10]]
         self.houses = ["SM_House_27", "SM_House_85", "SM_House_22", "SM_House_287", "SM_House_4333"]
         self._setup_flight()
 
@@ -70,6 +72,7 @@ class AirSimDroneEnv(gym.Env):
         self.calculate_target_location()
         # set target house pos
         pos = self.drone.simGetObjectPose(self.houses[random.randint(0, len(self.houses)-1)]).position 
+        #pos = self.drone.simGetObjectPose("SM_House_80").position 
         pos = [pos.x_val, pos.y_val, pos.z_val]
         self.target_house_pos = np.array(pos)
         self.starting_pos = self.starting_positions[random.randint(0, len(self.starting_positions)-1)]
@@ -85,7 +88,7 @@ class AirSimDroneEnv(gym.Env):
         self.drone.reset()
         self.drone.enableApiControl(True)
         self.drone.armDisarm(True)
-        self.setGeoFenceCoords(map="Small")
+        self.setGeoFenceCoords(map=self.map)
         # teleport the drone
         pose = self.drone.simGetVehiclePose()
         pose.position.x_val = self.starting_pos[0]
@@ -165,18 +168,20 @@ class AirSimDroneEnv(gym.Env):
             diff = self.last_distances[0] - dist
             self.last_distances = [dist, dx, dy, dz]
 
-            if dist < 20:
-                if self.current_final:
+            if dist < 15 and self.current_final:
+                reward = 500
+                done = 1
+                terminate_reason = "Done"
+            elif dist < 12 and not self.current_final:
+                reward = 499 
+                done = 0
+                if self.map == "Small":
                     reward = 500
                     done = 1
-                    terminate_reason = "Done"
-                else:
-                    reward = 500 #499 du 500 yaptik denemek amacli.
-                    done = 1
-                    terminate_reason = "Done"
-                    self.current_final = True
-                    self.target = self.target_house_pos
-                    self.last_distances = self.get_distance(quad_state)
+                terminate_reason = "Done"
+                self.current_final = True
+                self.target = self.target_house_pos
+                self.last_distances = self.get_distance(quad_state)
             elif diff > 0:
                 reward += diff * self.reward_multiplier
             else:
@@ -323,6 +328,8 @@ class AirSimDroneEnv(gym.Env):
         if not self.current_final:
             pos = self.drone.simGetObjectPose("KargoArabasi").position
             self.target = [pos.x_val, pos.y_val, pos.z_val]
+        else:
+            self.target = self.target_house_pos
 
     def correctOrientation(self):
         vel = self.drone.getMultirotorState().kinematics_estimated.linear_velocity

@@ -3,7 +3,7 @@ from .conf_dqn import DQNconf
 from config.model_config import registerEnvGetModelConfig
 import torch
 
-def getConfig(algo, NETWORK, num_actions, step_length, image_width, image_height, sim_speed):
+def getConfig(algo, NETWORK, num_actions, step_length, image_width, image_height, sim_speed, map="Default"):
     
 
     if algo == "PPO":
@@ -16,7 +16,7 @@ def getConfig(algo, NETWORK, num_actions, step_length, image_width, image_height
         print("Config cannot be generated")
         return None
 
-    modelConfig = registerEnvGetModelConfig(NETWORK, num_actions, step_length, image_width, image_height, sim_speed)    
+    modelConfig = registerEnvGetModelConfig(NETWORK, num_actions, step_length, image_width, image_height, sim_speed, map)    
     config["model"] = {"custom_model": "CustomNetwork" if NETWORK != "SENSOR" else "SENSOR",
                        "custom_model_config": modelConfig
                         }

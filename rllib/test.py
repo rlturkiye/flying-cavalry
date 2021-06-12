@@ -113,7 +113,7 @@ if __name__ == "__main__":
   
 
     agent = DQNTrainer(config=config, env=config["env"])
-    agent.restore("C:\\Users\\kara\\OneDrive\\Masaüstü\\cp\\checkpoint_004000\\checkpoint-4000")
+    agent.restore("D:\GitHub\\flying-cavalry\checkpoints\DQN\DQN_drone_env_0095e_00000_0_2021-06-11_21-36-57\checkpoint_000470\\checkpoint-470")
     env_config = {
         "observation_space": spaces.Dict({
             "img": spaces.Box(0, 255, [3, image_width, image_height]),
@@ -129,20 +129,24 @@ if __name__ == "__main__":
         "step_length": step_length,
         "image_size": [image_width, image_height],
         "onlySensor": False,
-        "sim_speed": sim_speed
+        "sim_speed": sim_speed,
+        "map": "Default"
     }
     env = AirSimDroneEnv(env_config)
 
+    done_count = 0
     for i in range(50):
         # run until episode ends
         episode_reward = 0
         done = False
         obs = env.reset()
         while not done:
-            pitch, roll, yaw  = env.drone.getMultirotorState().kinematics_estimated.orientation
-            print(yaw)
             action = agent.compute_action(obs)
             obs, reward, done, info = env.step(action)
             episode_reward += reward
+        if reward == 500:
+            done_count += 1
+
+    print("Successful dones: ", done_count)
     ray.shutdown()
 

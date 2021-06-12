@@ -12,8 +12,9 @@ import numpy as np
 import subprocess
 
 SEED_VALUE = 5
-TOTAL_STEP = 7000000 # total steps 
-TOTAL_TRAIN_ITER = 1000000 # how many times network updated
+EXPOIT_STEP = 200000 # epsilon steps 
+TOTAL_STEP = 250000 # total steps 
+#TOTAL_TRAIN_ITER = 200000 # how many times network updated
 
 def make_deterministic(seed):
 
@@ -55,6 +56,11 @@ if __name__ == "__main__":
     else:
         print("## CUDA not available")
 
+    """ray.init(object_store_memory = 2 * 1024 * 1024 * 1024,
+                                _redis_max_memory = 1024 * 1024 * 1024,
+                                _driver_object_store_memory = 1024 * 1024 * 1024,
+                                _memory = 1024 * 1024 * 1024)"""
+
     ray.init(object_store_memory = 2 * 1024 * 1024 * 1024)
 
     num_actions = 6
@@ -62,14 +68,15 @@ if __name__ == "__main__":
     image_width=256
     image_height=256
     sim_speed = 5
+    map = "Small"
 
-    config = getConfig(ALG, NETWORK, num_actions, step_length, image_width, image_height, sim_speed)
+    config = getConfig(ALG, NETWORK, num_actions, step_length, image_width, image_height, sim_speed, map)
     config["lr"] = 1e-4
-    config["timesteps_per_iteration"] = 64
-    config["learning_starts"] = 256
-    config["train_batch_size"] = 256
-    config["target_network_update_freq"] = 512
-    config["exploration_config"]["epsilon_timesteps"] = 5000
+    config["timesteps_per_iteration"] = 1024
+    config["learning_starts"] = 64
+    config["train_batch_size"] = 64
+    config["target_network_update_freq"] = 1024
+    config["exploration_config"]["epsilon_timesteps"] = EXPOIT_STEP
     config["env"] = "drone_env"
     config["num_gpus"] = 1 if torch.cuda.is_available() else 0
     
@@ -99,8 +106,8 @@ if __name__ == "__main__":
     #config_str = intro_repository(config)
     #print(config_str)
     results = tune.run(ALG, config=config,
-                            checkpoint_freq=5, 
-                            max_failures = 5,
+                            checkpoint_freq=1, 
+                            max_failures = 1,
                             log_to_file=["logs_out.txt", "logs_err.txt"],
                             checkpoint_at_end = True,
                             progress_reporter=CLIReporter(metric_columns=["loss","date", "training_iteration", "timesteps_total"]),
@@ -109,3 +116,5 @@ if __name__ == "__main__":
                             stop=stopx,
                             restore=REST_PATH)
     ray.shutdown()
+
+
