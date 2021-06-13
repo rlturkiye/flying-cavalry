@@ -47,7 +47,7 @@ DQN_CONFIG = with_common_config({
     # not affect learning, only the length of iterations.
     "timesteps_per_iteration": 1000,
     # Update the target network every `target_network_update_freq` steps.
-    "target_network_update_freq": 500,
+    "target_network_update_freq": 1024,
     # === Replay buffer ===
     # Size of the replay buffer. Note that if async_updates is set, then
     # each worker will have a replay buffer of this size.
@@ -106,6 +106,11 @@ DQN_CONFIG = with_common_config({
     "worker_side_prioritization": False,
     # Prevent iterations from going lower than this time span
     "min_iter_time_s": 1,
+    # === Replay Settings ===
+    # The number of contiguous environment steps to replay at once. This may
+    # be set to greater than 1 to support recurrent models.
+    "replay_sequence_length": 1,
+
 })
 
 def DQNconf():

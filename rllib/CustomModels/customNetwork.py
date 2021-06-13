@@ -52,6 +52,9 @@ class CustomNetwork(TorchModelV2,nn.Module):
 
         if(model_config["custom_model_config"]["fcnet_activation"] == "relu"):
             self.fully_connect_activation = F.relu
+        
+        # Holds the current "base" output (before logits layer).
+        self._features = None
 
     def forward(self, input_dict, state, seq_lens):
         x = input_dict["obs"]["img"] # 32, inChannel, img_shape, img_shape
@@ -84,8 +87,12 @@ class CustomNetwork(TorchModelV2,nn.Module):
         for j in range(i+1, self.counter + len(self.fc_hidden_dict)-1, 1): 
             x = self.fully_connect_activation(self.nn_layers[j](x))
         x = self.nn_layers[-1](x)
+        self._features = x
 
         return x, []
+
+    def value_function(self):
+        return torch.reshape(torch.mean(self._features, -1), [-1])
 
 class OneHotEnv(gym.core.ObservationWrapper):
     # Override `observation` to custom process the original observation
