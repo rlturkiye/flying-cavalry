@@ -43,11 +43,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--alg", default="DQN", help="RL algorithm")
     parser.add_argument("--network", default="RGB", help="Vision network")
+    parser.add_argument("--restore_path",default="")
     args = parser.parse_args()
 
-    global ALG, NETWORK
+    global ALG, NETWORK,REST_PATH
     ALG = args.alg
     NETWORK = args.network
+    REST_PATH = args.restore_path
 
 GOOGLE_COLLAB = False
 
@@ -113,7 +115,7 @@ if __name__ == "__main__":
   
 
     agent = DQNTrainer(config=config, env=config["env"])
-    agent.restore("D:\GitHub\\flying-cavalry\checkpoints\DQN\DQN_drone_env_0095e_00000_0_2021-06-11_21-36-57\checkpoint_000470\\checkpoint-470")
+    agent.restore(REST_PATH)
     env_config = {
         "observation_space": spaces.Dict({
             "img": spaces.Box(0, 255, [3, image_width, image_height]),

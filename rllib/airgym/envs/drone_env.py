@@ -197,7 +197,6 @@ class AirSimDroneEnv(gym.Env):
     def step(self, action):
         """Step"""
         auto_garbage_collect()
-        self.calculate_target_location()
 
         self.correctOrientation()
         zpos = self.drone.getMultirotorState().kinematics_estimated.position.z_val
@@ -217,6 +216,8 @@ class AirSimDroneEnv(gym.Env):
         obs = self._get_obs()
 
         self.total_step += 1
+        
+        self.calculate_target_location()
 
         return obs, reward, done, {}
 
