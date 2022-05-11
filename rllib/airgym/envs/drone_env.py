@@ -60,7 +60,7 @@ class AirSimDroneEnv(gym.Env):
         self.total_step = 0
         self.total_check = 5
         self.current_final = False
-        self.starting_positions = [[0, 0, -10], [-212, 7, -10], [-212, 7, -10], [23, -14, -10], [-216, -362, -10], [160, -66, -10]]
+        self.starting_positions = [[0, 0, -10]]#, [-212, 7, -10], [-212, 7, -10], [23, -14, -10], [-216, -362, -10], [160, -66, -10]]
         self.houses = ["SM_House_27", "SM_House_85", "SM_House_22", "SM_House_287", "SM_House_4333"]
         self._setup_flight()
 

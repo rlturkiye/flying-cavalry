@@ -132,7 +132,7 @@ if __name__ == "__main__":
         "image_size": [image_width, image_height],
         "onlySensor": False,
         "sim_speed": sim_speed,
-        "map": "Default"
+        "map": "Small"
     }
     env = AirSimDroneEnv(env_config)
 
@@ -142,12 +142,18 @@ if __name__ == "__main__":
         episode_reward = 0
         done = False
         obs = env.reset()
+        step = 0
         while not done:
             action = agent.compute_action(obs)
             obs, reward, done, info = env.step(action)
             episode_reward += reward
+            print(episode_reward, end="\r")
+            step += 1
+            if step == 50:
+                done = 1
         if reward == 500:
             done_count += 1
+            print(episode_reward)
 
     print("Successful dones: ", done_count)
     ray.shutdown()

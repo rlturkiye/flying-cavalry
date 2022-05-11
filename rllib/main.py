@@ -12,8 +12,8 @@ import numpy as np
 import subprocess
 
 SEED_VALUE = 5
-EXPOIT_STEP = 50000 # epsilon steps 
-TOTAL_STEP = 65000 # total steps 
+EXPOIT_STEP = 10000 # epsilon steps 
+TOTAL_STEP = 15000 # total steps 
 #TOTAL_TRAIN_ITER = 200000 # how many times network updated
 
 def make_deterministic(seed):
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     image_width=256
     image_height=256
     sim_speed = 5
-    map = "Small"
+    map = "Default"
 
     config = getConfig(ALG, NETWORK, num_actions, step_length, image_width, image_height, sim_speed, map)
     config["lr"] = 1e-4
