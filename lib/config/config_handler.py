@@ -17,7 +17,7 @@ def getConfig(algo, NETWORK, num_actions, step_length, image_width, image_height
         return None
 
     modelConfig = registerEnvGetModelConfig(NETWORK, num_actions, step_length, image_width, image_height, sim_speed, map)    
-    config["model"] = {"custom_model": "CustomNetwork" if NETWORK != "SENSOR" else "SENSOR",
+    config["model"] = {"custom_model": modelConfig["custom_model"],
                        "custom_model_config": modelConfig
                         }
     return config

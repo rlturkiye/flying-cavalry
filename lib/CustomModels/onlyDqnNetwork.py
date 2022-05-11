@@ -1,15 +1,7 @@
-import math
-import random
-import airsim
 import os
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
-from PIL import Image
-from setuptools import glob
-import time
 from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 from ray.rllib.utils.typing import ModelConfigDict
@@ -18,10 +10,8 @@ import os, sys
 currentdir = os.path.dirname(os.path.realpath(__file__))
 parentdir = os.path.dirname(currentdir)
 sys.path.append(parentdir)
-from airgym.envs.drone_env import AirSimDroneEnv
 import numpy
 from ray.rllib.utils.typing import ModelConfigDict
-
 
 # num_outputs/num_actions = 7
 class OnlyDqnNetwork(TorchModelV2,nn.Module): 
