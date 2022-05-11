@@ -31,7 +31,7 @@ def make_deterministic(seed):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--alg", default="DQN", help="RL algorithm")
-    parser.add_argument("--network", default="RGB", help="Vision network")
+    parser.add_argument("--network", default="JOINT", help="Vision network")
     parser.add_argument("--restore_path",default="")
     args = parser.parse_args()
 
