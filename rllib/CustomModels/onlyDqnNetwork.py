@@ -3,6 +3,7 @@ import random
 import airsim
 import os
 import numpy as np
+import ray
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -65,6 +66,11 @@ class OnlyDqnNetwork(TorchModelV2,nn.Module):
             x = self.conv_activ(self.nn_layers[i](x))
             
         x = x.view(x.size(0), -1)
+
+        a = [x.shape, self.nn_layers]
+
+        #ray.get(a)
+        #ray.get(self.nn_layers)
 
         for j in range(i+1, self.counter + len(self.fc_hidden_dict)-1, 1): 
             x = self.fully_connect_activation(self.nn_layers[j](x))

@@ -59,7 +59,7 @@ def rgbModel(num_actions, inChannel):
                                    [64, 4, 2, 0, [0]],
                                    [128, 2, 2, 0, [0]]]
     modelConfig["conv_activation"] = "relu"
-    modelConfig["fcnet_hiddens"] = [[2048, 64], [64, num_actions]]
+    modelConfig["fcnet_hiddens"] = [[128 * 15 * 15, 64], [64, num_actions]]
     modelConfig["fcnet_activation"] = "relu"
 
     return modelConfig
